@@ -78,7 +78,7 @@ func player_fight(skill_index: int) -> void:
 
 	_emit_hp()
 	await get_tree().create_timer(1.0).timeout
-	_check_battle()
+	_check_battle(true)
 
 func player_catch() -> void:
 	if state != BattleState.PLAYER_TURN:
@@ -139,6 +139,13 @@ func player_run() -> void:
 func _enemy_turn() -> void:
 	_change_state(BattleState.ENEMY_TURN)
 
+	# Guard against empty skills
+	if enemy_creature.data.skills.is_empty():
+		battle_message.emit("Wild %s has no moves!" % enemy_creature.display_name())
+		await get_tree().create_timer(1.0).timeout
+		_check_battle(false)
+		return
+
 	# Enemy picks a random skill
 	var skill_count := enemy_creature.data.skills.size()
 	var skill_index := randi() % skill_count
@@ -155,9 +162,9 @@ func _enemy_turn() -> void:
 
 	_emit_hp()
 	await get_tree().create_timer(1.0).timeout
-	_check_battle()
+	_check_battle(false)
 
-func _check_battle() -> void:
+func _check_battle(after_player_action: bool = true) -> void:
 	_change_state(BattleState.CHECK)
 
 	if enemy_creature.is_fainted():
@@ -199,12 +206,15 @@ func _check_battle() -> void:
 			battle_ended.emit("lose")
 		return
 
-	# Neither fainted — if it was the player's action, go to enemy turn
-	if state == BattleState.CHECK:
+	# Neither fainted — alternate turns
+	if after_player_action:
 		_enemy_turn()
+	else:
+		_change_state(BattleState.PLAYER_TURN)
+		battle_message.emit("What will %s do?" % player_creature.display_name())
 
 func _calc_damage(attacker: CreatureInstance, defender: CreatureInstance, skill: SkillData) -> int:
-	var base := float(skill.power) * (float(attacker.attack()) / float(defender.defense()))
+	var base := float(skill.power) * (float(attacker.attack()) / float(max(1, defender.defense())))
 	var effectiveness := _get_effectiveness(skill.element, defender.data.element)
 	var variance := randf_range(0.85, 1.15)
 	var damage := int(base * effectiveness * variance * 0.5)

@@ -17,7 +17,7 @@ func _setup_input_actions() -> void:
 	_add_key_action("move_right", KEY_D, KEY_RIGHT)
 	_add_key_action("ui_accept", KEY_ENTER, KEY_SPACE)
 	_add_key_action("ui_cancel", KEY_ESCAPE)
-	_add_key_action("open_menu", KEY_ESCAPE)
+	_add_key_action("open_menu", KEY_TAB)
 
 func _add_key_action(action_name: String, key1: Key, key2: Key = KEY_NONE) -> void:
 	if not InputMap.has_action(action_name):

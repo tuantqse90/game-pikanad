@@ -29,7 +29,7 @@ func _ready() -> void:
 	if Web3Manager:
 		Web3Manager.wallet_connected.connect(_on_wallet_connected)
 		Web3Manager.wallet_error.connect(_on_wallet_error)
-		if Web3Manager.is_connected():
+		if Web3Manager.is_wallet_connected():
 			wallet_label.text = Web3Manager.short_address()
 			wallet_btn.text = "Wallet Connected"
 
@@ -41,7 +41,7 @@ func _on_continue() -> void:
 	SceneManager.go_to_overworld()
 
 func _on_wallet() -> void:
-	if Web3Manager and not Web3Manager.is_connected():
+	if Web3Manager and not Web3Manager.is_wallet_connected():
 		wallet_btn.text = "Connecting..."
 		wallet_btn.disabled = true
 		Web3Manager.connect_wallet()

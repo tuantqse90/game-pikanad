@@ -89,12 +89,22 @@ func get_nft_creatures() -> void:
 func claim_battle_reward(battle_id_hex: String, amount_wei: String, signature_hex: String) -> void:
 	if not is_web or wallet_address == "":
 		return
+	# Validate inputs are safe hex strings to prevent JS injection
+	if not _is_safe_hex(battle_id_hex) or not _is_safe_hex(amount_wei) or not _is_safe_hex(signature_hex):
+		claim_error.emit("Invalid input format")
+		return
 	JavaScriptBridge.eval(
 		"web3_claim_battle_reward('%s', '%s', '%s')" % [battle_id_hex, amount_wei, signature_hex]
 	)
 
+func _is_safe_hex(s: String) -> bool:
+	for c in s:
+		if c not in "0123456789abcdefABCDEFx":
+			return false
+	return s.length() > 0
+
 ## Check if wallet is connected
-func is_connected() -> bool:
+func is_wallet_connected() -> bool:
 	return wallet_address != ""
 
 ## Get shortened address for display

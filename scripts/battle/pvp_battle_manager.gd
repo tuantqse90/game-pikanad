@@ -117,6 +117,25 @@ func _make_creature(data: Dictionary) -> CreatureInstance:
 	creature_data.base_defense = data.get("defense", 8)
 	creature_data.base_speed = data.get("speed", 12)
 
+	# Populate skills from server data
+	var skills_array: Array = data.get("skills", [])
+	for skill_entry in skills_array:
+		var skill := SkillData.new()
+		skill.skill_name = skill_entry.get("name", "Attack")
+		skill.power = skill_entry.get("power", 10)
+		skill.accuracy = skill_entry.get("accuracy", 0.9)
+		skill.element = skill_entry.get("element", 0)
+		creature_data.skills.append(skill)
+
+	# Fallback: ensure at least one skill so UI doesn't break
+	if creature_data.skills.is_empty():
+		var default_skill := SkillData.new()
+		default_skill.skill_name = "Tackle"
+		default_skill.power = 10
+		default_skill.accuracy = 0.95
+		default_skill.element = 0
+		creature_data.skills.append(default_skill)
+
 	var instance := CreatureInstance.new(creature_data, data.get("level", 5))
 	instance.current_hp = data.get("hp", instance.max_hp())
 	return instance

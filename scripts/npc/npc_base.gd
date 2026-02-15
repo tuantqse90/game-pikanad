@@ -33,7 +33,7 @@ func _ready() -> void:
 	_label.position = Vector2(-30, -28)
 	add_child(_label)
 
-func _input(event: InputEvent) -> void:
+func _unhandled_input(event: InputEvent) -> void:
 	if _interactable and event.is_action_pressed("ui_accept"):
 		if GameManager.state == GameManager.GameState.OVERWORLD:
 			interact()
@@ -49,7 +49,7 @@ func interact() -> void:
 
 func _show_dialogue() -> void:
 	GameManager.change_state(GameManager.GameState.PAUSED)
-	var dialogue_box := _get_dialogue_box()
+	var dialogue_box = _get_dialogue_box()
 	if dialogue_box:
 		dialogue_box.show_dialogue(dialogue_lines, func():
 			GameManager.change_state(GameManager.GameState.OVERWORLD)
@@ -58,7 +58,7 @@ func _show_dialogue() -> void:
 func _heal_party() -> void:
 	GameManager.change_state(GameManager.GameState.PAUSED)
 	PartyManager.heal_all()
-	var dialogue_box := _get_dialogue_box()
+	var dialogue_box = _get_dialogue_box()
 	if dialogue_box:
 		dialogue_box.show_dialogue(
 			["Your creatures have been fully healed!", "Come back anytime!"],
@@ -74,7 +74,7 @@ func _open_shop() -> void:
 		)
 	else:
 		# Fallback: just show dialogue
-		var dialogue_box := _get_dialogue_box()
+		var dialogue_box = _get_dialogue_box()
 		if dialogue_box:
 			dialogue_box.show_dialogue(
 				["Welcome to my shop!", "Sorry, shop is under construction."],

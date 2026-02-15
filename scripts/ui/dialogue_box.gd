@@ -11,7 +11,7 @@ var _current_line := 0
 var _is_typing := false
 var _on_complete: Callable
 var _full_text := ""
-var _visible_chars := 0
+var _visible_chars := 0.0
 
 const CHARS_PER_SECOND := 30.0
 
@@ -36,7 +36,7 @@ func _show_current_line() -> void:
 		return
 	_full_text = _lines[_current_line]
 	text_label.text = ""
-	_visible_chars = 0
+	_visible_chars = 0.0
 	_is_typing = true
 	continue_label.visible = false
 

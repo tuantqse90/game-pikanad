@@ -14,7 +14,6 @@ var species_list: Array[CreatureData] = []
 var meadow_species: Array[CreatureData] = []
 
 @onready var player: CharacterBody2D = $Player
-@onready var camera: Camera2D = $Player/Camera2D
 
 const MAP_W := 20  # tiles
 const MAP_H := 15

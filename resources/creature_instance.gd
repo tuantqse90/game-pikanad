@@ -19,18 +19,28 @@ func _init(p_data: CreatureData = null, p_level: int = 1) -> void:
 		nickname = p_data.species_name
 
 func display_name() -> String:
+	if not data:
+		return nickname if nickname != "" else "???"
 	return nickname if nickname != "" else data.species_name
 
 func max_hp() -> int:
+	if not data:
+		return 1
 	return data.hp_at_level(level)
 
 func attack() -> int:
+	if not data:
+		return 1
 	return data.attack_at_level(level)
 
 func defense() -> int:
+	if not data:
+		return 1
 	return data.defense_at_level(level)
 
 func speed() -> int:
+	if not data:
+		return 1
 	return data.speed_at_level(level)
 
 func is_fainted() -> bool:
@@ -52,8 +62,8 @@ func gain_exp(amount: int) -> bool:
 	var leveled_up := false
 	while exp >= exp_to_next_level():
 		exp -= exp_to_next_level()
+		var old_max := max_hp()  # Capture BEFORE level up
 		level += 1
-		var old_max := max_hp()
 		# Heal proportionally on level up
 		current_hp = min(current_hp + int(old_max * 0.3), max_hp())
 		leveled_up = true

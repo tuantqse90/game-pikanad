@@ -31,6 +31,8 @@ func load_game() -> bool:
 	if json.parse(json_str) != OK:
 		return false
 
+	if not json.data is Dictionary:
+		return false
 	var data: Dictionary = json.data
 
 	# Restore gold and items

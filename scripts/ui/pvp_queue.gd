@@ -29,7 +29,7 @@ func _ready() -> void:
 func _on_connected() -> void:
 	status_label.text = "Connected! Registering..."
 	var wallet := ""
-	if Web3Manager and Web3Manager.is_connected():
+	if Web3Manager and Web3Manager.is_wallet_connected():
 		wallet = Web3Manager.wallet_address
 	NetworkManager.register(wallet)
 
