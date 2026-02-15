@@ -1,0 +1,51 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/pvp_queue.gd" id="1"]
+
+[node name="PvPQueue" type="Control"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Background" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.1, 0.08, 0.15, 1)
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="CenterContainer"]
+
+[node name="TitleLabel" type="Label" parent="CenterContainer/VBox"]
+custom_minimum_size = Vector2(300, 40)
+text = "PvP BATTLE"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="StatusLabel" type="Label" parent="CenterContainer/VBox"]
+custom_minimum_size = Vector2(300, 30)
+text = "Connecting..."
+horizontal_alignment = 1
+
+[node name="QueueLabel" type="Label" parent="CenterContainer/VBox"]
+custom_minimum_size = Vector2(300, 30)
+text = ""
+horizontal_alignment = 1
+
+[node name="Spacer" type="Control" parent="CenterContainer/VBox"]
+custom_minimum_size = Vector2(0, 20)
+
+[node name="CancelBtn" type="Button" parent="CenterContainer/VBox"]
+custom_minimum_size = Vector2(200, 40)
+text = "Cancel"

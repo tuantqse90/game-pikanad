@@ -1,0 +1,36 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; but it can also be manually edited.
+
+config_version=5
+
+[application]
+
+config/name="Game Pikanad"
+config/description="2D Pixel Art Creature RPG"
+run/main_scene="res://scenes/main.tscn"
+config/features=PackedStringArray("4.4")
+
+[autoload]
+
+GameManager="*res://autoloads/game_manager.gd"
+PartyManager="*res://autoloads/party_manager.gd"
+SceneManager="*res://autoloads/scene_manager.gd"
+AudioManager="*res://autoloads/audio_manager.gd"
+ThemeManager="*res://autoloads/theme_manager.gd"
+InventoryManager="*res://autoloads/inventory_manager.gd"
+Web3Manager="*res://autoloads/web3_manager.gd"
+SaveManager="*res://autoloads/save_manager.gd"
+NetworkManager="*res://autoloads/network_manager.gd"
+
+[display]
+
+window/size/viewport_width=640
+window/size/viewport_height=360
+window/size/window_width_override=1280
+window/size/window_height_override=720
+window/stretch/mode="viewport"
+
+[rendering]
+
+textures/canvas_textures/default_texture_filter=0

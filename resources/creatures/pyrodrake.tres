@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="CreatureData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://resources/creature_data.gd" id="1"]
+[ext_resource type="Resource" path="res://resources/skills/flame_burst.tres" id="2"]
+[ext_resource type="Resource" path="res://resources/skills/inferno.tres" id="3"]
+[ext_resource type="Texture2D" path="res://assets/sprites/pyrodrake.png" id="4"]
+[ext_resource type="Texture2D" path="res://assets/sprites/pyrodrake_battle.png" id="5"]
+[ext_resource type="Texture2D" path="res://assets/sprites/pyrodrake_overworld.png" id="6"]
+
+[resource]
+script = ExtResource("1")
+species_name = "Pyrodrake"
+species_id = 7
+element = 0
+rarity = 2
+base_hp = 60
+base_attack = 20
+base_defense = 12
+base_speed = 11
+skills = [ExtResource("2"), ExtResource("3")]
+sprite_texture = ExtResource("4")
+battle_texture = ExtResource("5")
+overworld_texture = ExtResource("6")
+capture_rate = 0.2
+exp_yield = 50

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Game Pikanad</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a14;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            font-family: monospace;
+            color: #eee;
+        }
+        #canvas {
+            display: block;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            outline: none;
+        }
+        #status {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        #status-progress {
+            width: 300px;
+            height: 20px;
+            background: #1a1a2e;
+            border: 2px solid #333;
+            border-radius: 4px;
+            margin: 10px auto;
+        }
+        #status-progress-inner {
+            height: 100%;
+            background: #3498db;
+            border-radius: 2px;
+            transition: width 0.3s;
+            width: 0%;
+        }
+        #status-notice { display: none; }
+    </style>
+</head>
+<body>
+    <div id="status">
+        <p>Loading Game Pikanad...</p>
+        <div id="status-progress">
+            <div id="status-progress-inner"></div>
+        </div>
+        <p id="status-notice"></p>
+    </div>
+    <canvas id="canvas" tabindex="0">
+        Your browser does not support HTML5 canvas.
+    </canvas>
+
+    <!-- Ethers.js for blockchain interaction -->
+    <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"></script>
+
+    <!-- Game Pikanad Web3 config and bridge -->
+    <script src="js/config.js"></script>
+    <script src="js/web3_bridge.js"></script>
+
+    <!-- Godot engine (replaced during export) -->
+    <script src="$GODOT_URL"></script>
+    <script>
+        const GODOT_CONFIG = $GODOT_CONFIG;
+        const engine = new Engine(GODOT_CONFIG);
+
+        const statusDiv = document.getElementById("status");
+        const statusNotice = document.getElementById("status-notice");
+        const statusProgressInner = document.getElementById("status-progress-inner");
+
+        function setStatusMode(mode) {
+            statusDiv.style.display = mode === "hidden" ? "none" : "block";
+        }
+
+        function setStatusNotice(text) {
+            statusNotice.style.display = text ? "block" : "none";
+            statusNotice.textContent = text;
+        }
+
+        engine.startGame({
+            canvas: document.getElementById("canvas"),
+            onProgress: function (current, total) {
+                if (total > 0) {
+                    statusProgressInner.style.width = (current / total * 100) + "%";
+                }
+            },
+        }).then(() => {
+            setStatusMode("hidden");
+            // Focus canvas for input
+            document.getElementById("canvas").focus();
+        }).catch((err) => {
+            setStatusNotice("Error: " + err.message);
+        });
+    </script>
+</body>
+</html>

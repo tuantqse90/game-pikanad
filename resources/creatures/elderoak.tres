@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="CreatureData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://resources/creature_data.gd" id="1"]
+[ext_resource type="Resource" path="res://resources/skills/razor_leaf.tres" id="2"]
+[ext_resource type="Resource" path="res://resources/skills/solar_beam.tres" id="3"]
+[ext_resource type="Texture2D" path="res://assets/sprites/elderoak.png" id="4"]
+[ext_resource type="Texture2D" path="res://assets/sprites/elderoak_battle.png" id="5"]
+[ext_resource type="Texture2D" path="res://assets/sprites/elderoak_overworld.png" id="6"]
+
+[resource]
+script = ExtResource("1")
+species_name = "Elderoak"
+species_id = 12
+element = 2
+rarity = 3
+base_hp = 65
+base_attack = 22
+base_defense = 18
+base_speed = 8
+skills = [ExtResource("2"), ExtResource("3")]
+sprite_texture = ExtResource("4")
+battle_texture = ExtResource("5")
+overworld_texture = ExtResource("6")
+capture_rate = 0.1
+exp_yield = 65

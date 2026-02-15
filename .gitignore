@@ -1,0 +1,34 @@
+# Godot 4+ specific ignores
+.godot/
+*.tmp
+*.log
+*.import
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# Exports
+export/
+build/
+*.pck
+*.zip
+
+# Node.js (PvP server)
+server/node_modules/
+server/dist/
+
+# Foundry (smart contracts)
+contracts/out/
+contracts/cache/
+contracts/broadcast/
+
+# Environment
+.env
+.env.local

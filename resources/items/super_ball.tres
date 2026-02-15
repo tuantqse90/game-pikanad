@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+item_name = "Super Ball"
+item_type = 0
+description = "A better ball with higher catch rate."
+price = 300
+effect_value = 2

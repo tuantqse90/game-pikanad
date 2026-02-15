@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="CreatureData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://resources/creature_data.gd" id="1"]
+[ext_resource type="Resource" path="res://resources/skills/tackle.tres" id="2"]
+[ext_resource type="Resource" path="res://resources/skills/gust.tres" id="3"]
+[ext_resource type="Texture2D" path="res://assets/sprites/breezeling.png" id="4"]
+[ext_resource type="Texture2D" path="res://assets/sprites/breezeling_battle.png" id="5"]
+[ext_resource type="Texture2D" path="res://assets/sprites/breezeling_overworld.png" id="6"]
+
+[resource]
+script = ExtResource("1")
+species_name = "Breezeling"
+species_id = 13
+element = 3
+rarity = 0
+base_hp = 36
+base_attack = 10
+base_defense = 7
+base_speed = 15
+skills = [ExtResource("2"), ExtResource("3")]
+sprite_texture = ExtResource("4")
+battle_texture = ExtResource("5")
+overworld_texture = ExtResource("6")
+capture_rate = 0.45
+exp_yield = 26

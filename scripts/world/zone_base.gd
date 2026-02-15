@@ -1,0 +1,69 @@
+extends Node2D
+
+## Base class for all zone scenes. Handles player setup, creature spawning,
+## and portal creation. Subclasses set zone_species, bg_color, portals, etc.
+
+const WILD_CREATURE_SCENE := preload("res://scenes/creatures/wild_creature.tscn")
+const ZONE_PORTAL_SCENE := preload("res://scenes/world/zone_portal.tscn")
+
+@export var bg_color := Color(0.2, 0.55, 0.2)
+@export var spawn_count := 8
+@export var level_min := 2
+@export var level_max := 6
+@export var zone_name := "Unknown Zone"
+
+var zone_species: Array[CreatureData] = []
+
+@onready var player: CharacterBody2D = $Player
+@onready var background: ColorRect = $Background
+
+# Override in subclass to define zone-specific creature pool
+func _get_zone_species() -> Array[CreatureData]:
+	return []
+
+# Override to define portals: [{pos, target, spawn_offset, label}]
+func _get_portals() -> Array[Dictionary]:
+	return []
+
+func _ready() -> void:
+	GameManager.change_state(GameManager.GameState.OVERWORLD)
+
+	zone_species = _get_zone_species()
+
+	if background:
+		background.color = bg_color
+
+	# Handle spawn position from portal
+	if GameManager.has_meta("zone_spawn_offset"):
+		var offset: Vector2 = GameManager.get_meta("zone_spawn_offset")
+		player.position = offset
+		GameManager.remove_meta("zone_spawn_offset")
+
+	_spawn_wild_creatures()
+	_create_portals()
+
+func _spawn_wild_creatures() -> void:
+	if zone_species.is_empty():
+		return
+	for i in spawn_count:
+		var creature_node: Area2D = WILD_CREATURE_SCENE.instantiate()
+		var species_index := randi() % zone_species.size()
+		creature_node.creature_data = zone_species[species_index]
+		creature_node.level_min = level_min
+		creature_node.level_max = level_max
+		creature_node.position = Vector2(
+			randf_range(-280, 280),
+			randf_range(-200, 200)
+		)
+		if creature_node.position.distance_to(player.position) < 60:
+			creature_node.position = Vector2(150, 100)
+		add_child(creature_node)
+
+func _create_portals() -> void:
+	for portal_data in _get_portals():
+		var portal: Area2D = ZONE_PORTAL_SCENE.instantiate()
+		portal.position = portal_data["pos"]
+		portal.target_zone_path = portal_data["target"]
+		portal.spawn_offset = portal_data["spawn_offset"]
+		portal.portal_label = portal_data["label"]
+		add_child(portal)
