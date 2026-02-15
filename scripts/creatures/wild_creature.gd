@@ -18,10 +18,12 @@ const IDLE_TIME_MAX := 4.0
 var _direction := Vector2.ZERO
 var _wander_timer := 0.0
 var _is_wandering := false
+var _is_shiny := false
 
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
 	_start_idle()
+	_roll_shiny()
 	_setup_sprite()
 
 func _setup_sprite() -> void:
@@ -82,7 +84,16 @@ func _start_idle() -> void:
 	_direction = Vector2.ZERO
 	_wander_timer = randf_range(IDLE_TIME_MIN, IDLE_TIME_MAX)
 
+func _roll_shiny() -> void:
+	var rate := CreatureInstance.SHINY_RATE
+	if DexManager and DexManager.has_meta("has_shiny_charm"):
+		rate = CreatureInstance.SHINY_CHARM_RATE
+	_is_shiny = randf() < rate
+	if _is_shiny and anim_sprite:
+		anim_sprite.modulate = Color(1.0, 0.9, 0.4)
+
 func _on_body_entered(body: Node2D) -> void:
 	if body.is_in_group("player") and creature_data:
 		var wild_level := randi_range(level_min, level_max)
+		GameManager.set_meta("battle_creature_shiny", _is_shiny)
 		SceneManager.go_to_battle.call_deferred(creature_data, wild_level)

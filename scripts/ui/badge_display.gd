@@ -1,10 +1,12 @@
 extends CanvasLayer
 
-## Badge display overlay — shows 8 badge slots in a row.
+## Badge display overlay — earned badges with shimmer effect, unearned as dark outlines.
 
 signal closed
 
 var _panel: PanelContainer
+var _earned_rects: Array[ColorRect] = []
+var _shimmer_time := 0.0
 
 func _ready() -> void:
 	layer = 50
@@ -39,6 +41,7 @@ func _ready() -> void:
 	title.text = "Badges"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 16)
+	title.add_theme_color_override("font_color", ThemeManager.COL_ACCENT_GOLD)
 	vbox.add_child(title)
 
 	# Badge row
@@ -48,14 +51,14 @@ func _ready() -> void:
 	vbox.add_child(hbox)
 
 	var badge_colors := [
-		Color(0.3, 0.8, 0.3),   # Sprout — green
-		Color(0.9, 0.3, 0.1),   # Blaze — red-orange
-		Color(0.2, 0.5, 0.9),   # Tide — blue
-		Color(0.1, 0.6, 0.2),   # Grove — dark green
-		Color(0.6, 0.4, 0.2),   # Rumble — brown
-		Color(0.7, 0.7, 0.9),   # Tempest — light blue
-		Color(0.3, 0.2, 0.3),   # Obsidian — dark purple
-		Color(0.9, 0.8, 0.2),   # Champion — gold
+		Color(0.3, 0.8, 0.3),
+		Color(0.9, 0.3, 0.1),
+		Color(0.2, 0.5, 0.9),
+		Color(0.1, 0.6, 0.2),
+		Color(0.6, 0.4, 0.2),
+		Color(0.7, 0.7, 0.9),
+		Color(0.3, 0.2, 0.3),
+		Color(0.9, 0.8, 0.2),
 	]
 
 	for i in range(8):
@@ -65,16 +68,26 @@ func _ready() -> void:
 
 		var circle := ColorRect.new()
 		circle.custom_minimum_size = Vector2(24, 24)
-		if BadgeManager.has_badge(i + 1):
+		var earned := BadgeManager.has_badge(i + 1)
+		if earned:
 			circle.color = badge_colors[i]
+			_earned_rects.append(circle)
 		else:
-			circle.color = Color(0.3, 0.3, 0.3)  # Gray for unearned
+			# Dark outline only
+			circle.color = Color(0.15, 0.12, 0.2)
+			var outline_style := StyleBoxFlat.new()
+			outline_style.bg_color = Color(0.15, 0.12, 0.2)
+			outline_style.set_border_width_all(1)
+			outline_style.border_color = Color(0.3, 0.28, 0.4)
+			outline_style.set_corner_radius_all(2)
 		badge_box.add_child(circle)
 
 		var name_label := Label.new()
 		name_label.text = BadgeManager.BADGE_NAMES[i]
 		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		name_label.add_theme_font_size_override("font_size", 8)
+		if not earned:
+			name_label.add_theme_color_override("font_color", ThemeManager.COL_TEXT_DIM)
 		badge_box.add_child(name_label)
 
 	# Badge count
@@ -92,3 +105,10 @@ func _ready() -> void:
 		queue_free()
 	)
 	vbox.add_child(close_btn)
+
+func _process(delta: float) -> void:
+	# Shimmer effect on earned badges (alpha oscillation)
+	_shimmer_time += delta * 2.0
+	for i in _earned_rects.size():
+		var alpha := 0.75 + sin(_shimmer_time + i * 0.8) * 0.25
+		_earned_rects[i].modulate.a = alpha

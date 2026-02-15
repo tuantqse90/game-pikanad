@@ -4,7 +4,7 @@ extends Node
 ## IndexedDB on web (persistent across sessions).
 
 const SAVE_PATH := "user://save_data.json"
-const SAVE_VERSION := 3
+const SAVE_VERSION := 5
 
 func save_game() -> void:
 	var save_data := {
@@ -14,6 +14,10 @@ func save_game() -> void:
 		"party": _serialize_party(),
 		"dex": DexManager.serialize(),
 		"badges": BadgeManager.serialize(),
+		"daily_rewards": DailyRewardManager.serialize(),
+		"quests": QuestManager.serialize(),
+		"stats": StatsManager.serialize(),
+		"tutorial": TutorialManager.serialize(),
 	}
 
 	var json_str := JSON.stringify(save_data)
@@ -57,6 +61,22 @@ func load_game() -> bool:
 	if data.has("badges") and BadgeManager:
 		BadgeManager.deserialize(data["badges"])
 
+	# Restore daily rewards
+	if data.has("daily_rewards") and DailyRewardManager:
+		DailyRewardManager.deserialize(data["daily_rewards"])
+
+	# Restore quests
+	if data.has("quests") and QuestManager:
+		QuestManager.deserialize(data["quests"])
+
+	# Restore stats
+	if data.has("stats") and StatsManager:
+		StatsManager.deserialize(data["stats"])
+
+	# Restore tutorial
+	if data.has("tutorial") and TutorialManager:
+		TutorialManager.deserialize(data["tutorial"])
+
 	return true
 
 func _serialize_party() -> Array:
@@ -70,6 +90,7 @@ func _serialize_party() -> Array:
 			"exp": creature.exp,
 			"is_nft": creature.is_nft,
 			"nft_token_id": creature.nft_token_id,
+			"is_shiny": creature.is_shiny,
 		}
 		# Save active skills
 		var skill_paths: Array = []
@@ -95,6 +116,7 @@ func _deserialize_party(party_data: Array) -> void:
 		creature.exp = entry.get("exp", 0)
 		creature.is_nft = entry.get("is_nft", false)
 		creature.nft_token_id = entry.get("nft_token_id", -1)
+		creature.is_shiny = entry.get("is_shiny", false)
 
 		# Restore active skills
 		var skill_paths: Array = entry.get("active_skills", [])
@@ -143,6 +165,33 @@ func _migrate_save(data: Dictionary, from_version: int) -> Dictionary:
 			"defeated_trainers": {},
 		}
 		data["save_version"] = 3
+
+	if from_version < 4:
+		# v3 -> v4: Add daily rewards, quests, stats, is_shiny on party
+		data["daily_rewards"] = {"last_login_date": "", "login_streak": 0}
+		data["quests"] = {"active_quests": [], "quest_date": ""}
+		data["stats"] = {
+			"battles_won": 0,
+			"battles_lost": 0,
+			"creatures_caught": 0,
+			"creatures_evolved": 0,
+			"trainers_defeated": 0,
+			"total_damage_dealt": 0,
+			"zones_explored": [],
+			"play_time_seconds": 0.0,
+			"shinies_found": 0,
+		}
+		# Ensure party entries have is_shiny
+		var party: Array = data.get("party", [])
+		for entry in party:
+			if not entry.has("is_shiny"):
+				entry["is_shiny"] = false
+		data["save_version"] = 4
+
+	if from_version < 5:
+		# v4 -> v5: Add tutorial completion tracking
+		data["tutorial"] = {}
+		data["save_version"] = 5
 
 	return data
 

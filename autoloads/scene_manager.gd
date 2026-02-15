@@ -66,6 +66,9 @@ func go_to_zone(zone_path: String) -> void:
 	current_zone_path = zone_path
 	if SaveManager:
 		SaveManager.save_game()
+	# Track quest and stats for zone exploration
+	QuestManager.increment_quest("explore_zone")
+	StatsManager.add_zone(zone_path)
 	await _fade_transition(func():
 		GameManager.change_state(GameManager.GameState.OVERWORLD)
 		get_tree().change_scene_to_file(zone_path)

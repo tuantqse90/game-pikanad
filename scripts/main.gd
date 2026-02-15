@@ -1,6 +1,6 @@
 extends Control
 
-## Main menu scene with Web3 integration.
+## Main menu scene with floating particles, creature showcase, and styled buttons.
 
 @onready var start_btn: Button = $CenterContainer/VBoxContainer/StartBtn
 @onready var continue_btn: Button = $CenterContainer/VBoxContainer/ContinueBtn
@@ -10,10 +10,40 @@ extends Control
 @onready var wallet_label: Label = $CenterContainer/VBoxContainer/WalletLabel
 
 var _dex_screen: Node
+var _daily_popup: Node
+var _stats_panel: Node
+var _stats_btn: Button
+var _particles: CPUParticles2D
+var _showcase_sprites: Array[ColorRect] = []
 
 func _ready() -> void:
 	GameManager.change_state(GameManager.GameState.MENU)
 	AudioManager.play_track(AudioManager.MusicTrack.MENU)
+
+	# Style the background
+	$Background.color = ThemeManager.COL_BG_DARKEST
+
+	# Style title label
+	var title: Label = $CenterContainer/VBoxContainer/TitleLabel
+	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_color_override("font_color", ThemeManager.COL_ACCENT_GOLD)
+	title.add_theme_constant_override("shadow_offset_x", 2)
+	title.add_theme_constant_override("shadow_offset_y", 2)
+	title.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.6))
+
+	# Style subtitle
+	var subtitle: Label = $CenterContainer/VBoxContainer/SubtitleLabel
+	subtitle.text = "A Creature RPG on Monad"
+	subtitle.add_theme_font_size_override("font_size", 10)
+	subtitle.add_theme_color_override("font_color", ThemeManager.COL_TEXT_DIM)
+
+	# Style buttons wider with >> prefix
+	_style_menu_button(start_btn, ">> New Game")
+	_style_menu_button(continue_btn, ">> Continue")
+	_style_menu_button(dex_btn, ">> Pikanadex")
+	_style_menu_button(wallet_btn, ">> Connect Wallet")
+	_style_menu_button(quit_btn, ">> Quit")
+
 	start_btn.pressed.connect(_on_start)
 	continue_btn.pressed.connect(_on_continue)
 	dex_btn.pressed.connect(_on_dex)
@@ -25,6 +55,32 @@ func _ready() -> void:
 	var has_save := SaveManager.has_save()
 	continue_btn.visible = has_save
 	dex_btn.visible = has_save
+
+	# Add Stats button dynamically
+	_stats_btn = Button.new()
+	_stats_btn.text = ">> Stats"
+	_stats_btn.custom_minimum_size = Vector2(220, 36)
+	_stats_btn.visible = has_save
+	_stats_btn.pressed.connect(_on_stats)
+	var vbox := $CenterContainer/VBoxContainer
+	var dex_idx := dex_btn.get_index()
+	vbox.add_child(_stats_btn)
+	vbox.move_child(_stats_btn, dex_idx + 1)
+
+	# VBox spacing
+	vbox.add_theme_constant_override("separation", 6)
+
+	# Floating particle effect (faint blue sparkles)
+	_create_particles()
+
+	# Creature showcase — 3 random colored silhouettes
+	_create_creature_showcase()
+
+	# Version label (bottom-right)
+	_create_version_label()
+
+	# Show daily reward popup if available
+	_check_daily_reward()
 
 	# Show/hide web-specific buttons
 	var is_web := OS.has_feature("web")
@@ -38,7 +94,79 @@ func _ready() -> void:
 		Web3Manager.wallet_error.connect(_on_wallet_error)
 		if Web3Manager.is_wallet_connected():
 			wallet_label.text = Web3Manager.short_address()
-			wallet_btn.text = "Wallet Connected"
+			wallet_btn.text = ">> Wallet Connected"
+
+func _style_menu_button(btn: Button, text: String) -> void:
+	btn.text = text
+	btn.custom_minimum_size = Vector2(220, 36)
+
+func _create_particles() -> void:
+	_particles = CPUParticles2D.new()
+	_particles.emitting = true
+	_particles.amount = 20
+	_particles.lifetime = 4.0
+	_particles.one_shot = false
+	_particles.explosiveness = 0.0
+	_particles.direction = Vector2(0, -1)
+	_particles.spread = 180.0
+	_particles.gravity = Vector2(0, -5)
+	_particles.initial_velocity_min = 5.0
+	_particles.initial_velocity_max = 15.0
+	_particles.scale_amount_min = 0.5
+	_particles.scale_amount_max = 1.5
+	_particles.color = Color(0.3, 0.5, 0.9, 0.15)
+	_particles.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	_particles.emission_rect_extents = Vector2(320, 180)
+	_particles.position = Vector2(320, 180)
+	_particles.z_index = -1
+	# Add as Node2D child to background
+	var particles_holder := Node2D.new()
+	particles_holder.z_index = -1
+	add_child(particles_holder)
+	particles_holder.add_child(_particles)
+
+func _create_creature_showcase() -> void:
+	var colors := [
+		Color(0.95, 0.4, 0.2, 0.12),   # Fiery
+		Color(0.2, 0.6, 0.95, 0.12),   # Watery
+		Color(0.3, 0.8, 0.3, 0.12),    # Grassy
+	]
+	for i in 3:
+		var rect := ColorRect.new()
+		rect.color = colors[i]
+		rect.custom_minimum_size = Vector2(28, 28)
+		rect.size = Vector2(28, 28)
+		rect.position = Vector2(240 + i * 50, 260)
+		rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(rect)
+		_showcase_sprites.append(rect)
+
+var _breathe_time := 0.0
+
+func _process(delta: float) -> void:
+	# Breathing animation for creature showcase
+	_breathe_time += delta * 1.5
+	for i in _showcase_sprites.size():
+		var offset_y := sin(_breathe_time + i * 1.2) * 3.0
+		_showcase_sprites[i].position.y = 260 + offset_y
+
+func _create_version_label() -> void:
+	var ver := Label.new()
+	ver.text = "v0.5.0"
+	ver.add_theme_font_size_override("font_size", 8)
+	ver.add_theme_color_override("font_color", ThemeManager.COL_TEXT_DIM)
+	ver.anchors_preset = Control.PRESET_BOTTOM_RIGHT
+	ver.anchor_left = 1.0
+	ver.anchor_top = 1.0
+	ver.anchor_right = 1.0
+	ver.anchor_bottom = 1.0
+	ver.offset_left = -50
+	ver.offset_top = -18
+	ver.offset_right = -4
+	ver.offset_bottom = -4
+	ver.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	ver.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(ver)
 
 func _on_start() -> void:
 	SceneManager.go_to_overworld()
@@ -49,8 +177,7 @@ func _on_continue() -> void:
 
 func _on_dex() -> void:
 	if _dex_screen:
-		return  # Already open
-	# Load dex data first if saved
+		return
 	if SaveManager.has_save():
 		SaveManager.load_game()
 	var dex_scene := load("res://scenes/ui/creature_dex.tscn")
@@ -63,9 +190,20 @@ func _on_dex() -> void:
 			_dex_screen = null
 	)
 
+func _on_stats() -> void:
+	if _stats_panel:
+		return
+	if SaveManager.has_save():
+		SaveManager.load_game()
+	_stats_panel = load("res://scripts/ui/stats_panel.gd").new()
+	add_child(_stats_panel)
+	_stats_panel.closed.connect(func():
+		_stats_panel = null
+	)
+
 func _on_wallet() -> void:
 	if Web3Manager and not Web3Manager.is_wallet_connected():
-		wallet_btn.text = "Connecting..."
+		wallet_btn.text = ">> Connecting..."
 		wallet_btn.disabled = true
 		Web3Manager.connect_wallet()
 
@@ -73,11 +211,23 @@ func _on_quit() -> void:
 	get_tree().quit()
 
 func _on_wallet_connected(address: String) -> void:
-	wallet_btn.text = "Wallet Connected"
+	wallet_btn.text = ">> Wallet Connected"
 	wallet_btn.disabled = true
 	wallet_label.text = Web3Manager.short_address()
 
 func _on_wallet_error(message: String) -> void:
-	wallet_btn.text = "Connect Wallet"
+	wallet_btn.text = ">> Connect Wallet"
 	wallet_btn.disabled = false
 	wallet_label.text = message
+
+func _check_daily_reward() -> void:
+	var reward_info := DailyRewardManager.check_daily_reward()
+	if reward_info["available"]:
+		_daily_popup = load("res://scripts/ui/daily_reward_popup.gd").new()
+		add_child(_daily_popup)
+		_daily_popup.show_reward(reward_info["day"], reward_info["reward"])
+		_daily_popup.reward_claimed.connect(func():
+			if _daily_popup:
+				_daily_popup.queue_free()
+				_daily_popup = null
+		)

@@ -1,30 +1,27 @@
 extends Node2D
 
-## Main overworld zone (Starter Meadow). Sets up TileMap terrain programmatically,
+## Main overworld zone (Starter Meadow). Sets up terrain programmatically,
 ## spawns wild creatures, and creates portals to other zones.
 
 const WILD_CREATURE_SCENE := preload("res://scenes/creatures/wild_creature.tscn")
 const ZONE_PORTAL_SCENE := preload("res://scenes/world/zone_portal.tscn")
 const NPC_SCENE := preload("res://scenes/npc/npc_base.tscn")
 
-# All 5 base species
 var species_list: Array[CreatureData] = []
-
-# Zone-specific creature pools
 var meadow_species: Array[CreatureData] = []
 
 var _canvas_modulate: CanvasModulate
+var _quest_panel: Node
 
 @onready var player: CharacterBody2D = $Player
 
-const MAP_W := 20  # tiles
+const MAP_W := 20
 const MAP_H := 15
 
 func _ready() -> void:
 	GameManager.change_state(GameManager.GameState.OVERWORLD)
 	GameManager.set_meta("battle_zone", "Starter Meadow")
 
-	# Load species data
 	species_list = [
 		load("res://resources/creatures/flamepup.tres"),
 		load("res://resources/creatures/aquafin.tres"),
@@ -33,49 +30,61 @@ func _ready() -> void:
 		load("res://resources/creatures/stoneling.tres"),
 	]
 
-	# Meadow has common grass/wind creatures
 	meadow_species = [
-		species_list[2],  # Thornsprout
-		species_list[3],  # Zephyrix
+		species_list[2],
+		species_list[3],
 		load("res://resources/creatures/vinewhisker.tres"),
 		load("res://resources/creatures/breezeling.tres"),
 	]
 
-	# Give starter if party is empty
 	if PartyManager.party_size() == 0:
 		PartyManager.give_starter(species_list[0], 5)
 
-	# Handle spawn position from portal
 	if GameManager.has_meta("zone_spawn_offset"):
 		var offset: Vector2 = GameManager.get_meta("zone_spawn_offset")
 		player.position = offset
 		GameManager.remove_meta("zone_spawn_offset")
 
-	# Build terrain
 	_build_terrain()
-
-	# Spawn wild creatures
 	_spawn_wild_creatures()
-
-	# Create zone portals
 	_create_portals()
-
-	# Spawn NPCs
 	_create_npcs()
-
-	# Day/night cycle
 	_setup_day_night()
-
-	# Minimap
 	_setup_minimap()
 
-	# Weather (meadow = clear)
 	GameManager.set_meta("zone_weather", WeatherSystem.WeatherType.CLEAR)
+	StatsManager.add_zone("Starter Meadow")
+
+	# Tutorial triggers
+	_trigger_tutorials()
 
 func _build_terrain() -> void:
-	# Create a simple colored background based on zone biome
-	# The Background ColorRect already exists in the scene
-	pass
+	# Ground texture variation: scattered color patches for visual interest
+	var base_green := Color(0.22, 0.48, 0.18)
+	for i in 18:
+		var patch := ColorRect.new()
+		var shade := randf_range(-0.04, 0.04)
+		patch.color = Color(
+			base_green.r + shade,
+			base_green.g + randf_range(-0.06, 0.06),
+			base_green.b + shade,
+			0.3
+		)
+		patch.size = Vector2(randf_range(30, 80), randf_range(20, 50))
+		patch.position = Vector2(randf_range(-300, 280), randf_range(-220, 200))
+		patch.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		patch.z_index = -5
+		add_child(patch)
+
+	# Decorative grass tufts
+	for i in 25:
+		var tuft := ColorRect.new()
+		tuft.color = Color(0.18, 0.55, 0.15, 0.35)
+		tuft.size = Vector2(randf_range(3, 8), randf_range(2, 5))
+		tuft.position = Vector2(randf_range(-300, 290), randf_range(-220, 210))
+		tuft.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		tuft.z_index = -4
+		add_child(tuft)
 
 func _spawn_wild_creatures() -> void:
 	var spawn_count := 8
@@ -87,54 +96,18 @@ func _spawn_wild_creatures() -> void:
 			randf_range(-280, 280),
 			randf_range(-200, 200)
 		)
-		# Avoid spawning on top of the player
 		if creature_node.position.distance_to(player.position) < 60:
 			creature_node.position = Vector2(150, 100)
 		add_child(creature_node)
 
 func _create_portals() -> void:
-	# Portal to Fire Volcano (right side)
-	_add_portal(
-		Vector2(300, 0),
-		"res://scenes/world/zones/fire_volcano.tscn",
-		Vector2(-280, 0),
-		"Fire Volcano >>"
-	)
-
-	# Portal to Water Coast (bottom)
-	_add_portal(
-		Vector2(0, 220),
-		"res://scenes/world/zones/water_coast.tscn",
-		Vector2(0, -200),
-		"Water Coast vv"
-	)
-
-	# Portal to Forest Grove (left side)
-	_add_portal(
-		Vector2(-300, 0),
-		"res://scenes/world/zones/forest_grove.tscn",
-		Vector2(280, 0),
-		"<< Forest Grove"
-	)
-
-	# Portal to Earth Caves (top)
-	_add_portal(
-		Vector2(0, -220),
-		"res://scenes/world/zones/earth_caves.tscn",
-		Vector2(0, 200),
-		"^^ Earth Caves"
-	)
-
-	# Portal to Champion Arena (top-right)
-	_add_portal(
-		Vector2(250, -180),
-		"res://scenes/world/zones/champion_arena.tscn",
-		Vector2(0, 200),
-		"Champion Arena"
-	)
+	_add_portal(Vector2(300, 0), "res://scenes/world/zones/fire_volcano.tscn", Vector2(-280, 0), "Fire Volcano >>")
+	_add_portal(Vector2(0, 220), "res://scenes/world/zones/water_coast.tscn", Vector2(0, -200), "Water Coast vv")
+	_add_portal(Vector2(-300, 0), "res://scenes/world/zones/forest_grove.tscn", Vector2(280, 0), "<< Forest Grove")
+	_add_portal(Vector2(0, -220), "res://scenes/world/zones/earth_caves.tscn", Vector2(0, 200), "^^ Earth Caves")
+	_add_portal(Vector2(250, -180), "res://scenes/world/zones/champion_arena.tscn", Vector2(0, 200), "Champion Arena")
 
 func _create_npcs() -> void:
-	# Healer NPC
 	var healer: Area2D = NPC_SCENE.instantiate()
 	healer.npc_name = "Nurse Joy"
 	healer.npc_type = healer.NPCType.HEALER
@@ -143,7 +116,6 @@ func _create_npcs() -> void:
 	healer.position = Vector2(-80, -80)
 	add_child(healer)
 
-	# Shopkeeper NPC
 	var shopkeeper: Area2D = NPC_SCENE.instantiate()
 	shopkeeper.npc_name = "Merchant"
 	shopkeeper.npc_type = shopkeeper.NPCType.SHOPKEEPER
@@ -153,17 +125,14 @@ func _create_npcs() -> void:
 		load("res://resources/items/capture_ball.tres"),
 		load("res://resources/items/potion.tres"),
 	]
-	# Badge 2: Super Ball available
 	if BadgeManager and BadgeManager.has_badge(2):
 		shop_list.append(load("res://resources/items/super_ball.tres"))
-	# Badge 6: Ultra Ball available
 	if BadgeManager and BadgeManager.has_badge(6):
 		shop_list.append(load("res://resources/items/ultra_ball.tres"))
 	shopkeeper.shop_items = shop_list
 	shopkeeper.position = Vector2(80, -80)
 	add_child(shopkeeper)
 
-	# Talker NPC (hint giver)
 	var talker: Area2D = NPC_SCENE.instantiate()
 	talker.npc_name = "Old Man"
 	talker.npc_type = talker.NPCType.TALKER
@@ -177,7 +146,6 @@ func _create_npcs() -> void:
 	talker.position = Vector2(0, -120)
 	add_child(talker)
 
-	# Leader Kai (Badge 1)
 	var kai: Area2D = NPC_SCENE.instantiate()
 	kai.npc_name = "Leader Kai"
 	kai.npc_type = kai.NPCType.TRAINER
@@ -186,6 +154,17 @@ func _create_npcs() -> void:
 	kai.trainer_id = "kai"
 	kai.position = Vector2(-150, 80)
 	add_child(kai)
+
+	var trader: Area2D = NPC_SCENE.instantiate()
+	trader.npc_name = "Trader"
+	trader.npc_type = trader.NPCType.TALKER
+	trader.npc_color = Color(0.8, 0.6, 0.2)
+	trader.dialogue_lines = [
+		"Trading is coming soon! Stay tuned.",
+		"Soon you'll be able to trade creatures with other players!",
+	]
+	trader.position = Vector2(120, 80)
+	add_child(trader)
 
 func _add_portal(pos: Vector2, target: String, spawn_offset: Vector2, label: String) -> void:
 	var portal: Area2D = ZONE_PORTAL_SCENE.instantiate()
@@ -200,7 +179,7 @@ func _setup_minimap() -> void:
 	minimap_layer.layer = 90
 	add_child(minimap_layer)
 	var minimap := preload("res://scripts/ui/minimap.gd").new()
-	minimap.setup(self)
+	minimap.setup(self, "Starter Meadow")
 	minimap_layer.add_child(minimap)
 
 func _setup_day_night() -> void:
@@ -213,3 +192,29 @@ func _on_time_phase_changed(_new_phase: int) -> void:
 	if _canvas_modulate:
 		var tween := create_tween()
 		tween.tween_property(_canvas_modulate, "color", TimeManager.get_tint_color(), 2.0)
+
+func _trigger_tutorials() -> void:
+	if not TutorialManager:
+		return
+	# Welcome + movement on first overworld entry
+	if not TutorialManager.is_completed("welcome"):
+		await get_tree().create_timer(0.5).timeout
+		TutorialManager.show_tutorial("welcome")
+		# Chain movement tutorial after welcome
+		await get_tree().create_timer(1.0).timeout
+		if not TutorialManager.is_completed("movement"):
+			TutorialManager.show_tutorial("movement")
+	# First creature tutorial when party size == 1
+	if PartyManager.party_size() == 1 and not TutorialManager.is_completed("first_creature"):
+		await get_tree().create_timer(1.5).timeout
+		TutorialManager.show_tutorial("first_creature")
+
+func _input(event: InputEvent) -> void:
+	if GameManager.state != GameManager.GameState.OVERWORLD:
+		return
+	if event.is_action_pressed("open_quests") and not _quest_panel:
+		_quest_panel = load("res://scripts/ui/quest_panel.gd").new()
+		add_child(_quest_panel)
+		_quest_panel.closed.connect(func():
+			_quest_panel = null
+		)

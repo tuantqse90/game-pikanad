@@ -64,6 +64,14 @@ func start_battle() -> void:
 	var enemy_level: int = GameManager.get_meta("battle_creature_level") as int
 
 	enemy_creature = CreatureInstance.new(_enemy_data, enemy_level)
+
+	# Check if shiny
+	if GameManager.has_meta("battle_creature_shiny") and GameManager.get_meta("battle_creature_shiny"):
+		enemy_creature.is_shiny = true
+		GameManager.remove_meta("battle_creature_shiny")
+	elif GameManager.has_meta("battle_creature_shiny"):
+		GameManager.remove_meta("battle_creature_shiny")
+
 	player_creature = PartyManager.get_first_alive()
 
 	if not player_creature:
@@ -75,7 +83,8 @@ func start_battle() -> void:
 		DexManager.mark_seen(_enemy_data.species_id)
 
 	_change_state(BattleState.START)
-	battle_message.emit("A wild %s (Lv.%d) appeared!" % [enemy_creature.display_name(), enemy_creature.level])
+	var shiny_prefix := "A wild Shiny %s" if enemy_creature.is_shiny else "A wild %s"
+	battle_message.emit((shiny_prefix + " (Lv.%d) appeared!") % [enemy_creature.display_name(), enemy_creature.level])
 	_emit_hp()
 
 	# Short delay then player turn
@@ -209,6 +218,7 @@ func _execute_attack(attacker: CreatureInstance, defender: CreatureInstance, ski
 		AudioManager.play_sound(AudioManager.SFX.ATTACK_HIT)
 		if is_player:
 			player_attacked.emit()
+			StatsManager.increment("total_damage_dealt", damage)
 		else:
 			enemy_attacked.emit()
 		battle_message.emit("%s used %s! (%d dmg)" % [attacker.display_name(), skill.skill_name, damage])
@@ -219,11 +229,19 @@ func _execute_attack(attacker: CreatureInstance, defender: CreatureInstance, ski
 			effectiveness_text.emit("SUPER EFFECTIVE!", effectiveness)
 			await _delay(0.6)
 			battle_message.emit("It's super effective!")
+			# Tutorial: type advantage
+			if TutorialManager and not TutorialManager.is_completed("type_advantage"):
+				await _delay(0.5)
+				TutorialManager.show_tutorial("type_advantage")
 		elif effectiveness < 0.8:
 			AudioManager.play_sound(AudioManager.SFX.NOT_EFFECTIVE)
 			effectiveness_text.emit("Not very effective...", effectiveness)
 			await _delay(0.6)
 			battle_message.emit("It's not very effective...")
+			# Tutorial: type advantage
+			if TutorialManager and not TutorialManager.is_completed("type_advantage"):
+				await _delay(0.5)
+				TutorialManager.show_tutorial("type_advantage")
 
 		# Drain healing
 		if skill.drain_percent > 0.0:
@@ -383,6 +401,9 @@ func player_catch(ball_name: String = "Capture Ball") -> void:
 		battle_message.emit("Gotcha! %s was captured!" % enemy_creature.display_name())
 		var caught := CreatureInstance.new(_enemy_data, enemy_creature.level)
 		caught.current_hp = enemy_creature.current_hp
+		caught.is_shiny = enemy_creature.is_shiny
+		if caught.is_shiny:
+			StatsManager.increment("shinies_found")
 		# Mark caught in dex
 		if DexManager:
 			DexManager.mark_caught(_enemy_data.species_id)
@@ -840,6 +861,19 @@ func finish_battle_after_evolution() -> void:
 	_end_battle("win")
 
 func _end_battle(result: String) -> void:
+	# Track quests and stats
+	match result:
+		"win":
+			QuestManager.increment_quest("win_battle")
+			StatsManager.increment("battles_won")
+			if is_trainer_battle:
+				StatsManager.increment("trainers_defeated")
+		"capture":
+			QuestManager.increment_quest("catch")
+			StatsManager.increment("creatures_caught")
+		"lose":
+			StatsManager.increment("battles_lost")
+
 	# Reset battle modifiers on all party creatures
 	for creature in PartyManager.party:
 		creature.reset_battle_modifiers()

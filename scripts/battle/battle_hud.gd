@@ -1,6 +1,7 @@
 extends CanvasLayer
 
-## Battle HUD — action menu, HP bars, message log, animated battle sprites.
+## Battle HUD — 2x2 action grid, element badges, EXP bar, status colors,
+## damage number pop, and trainer party dots.
 
 signal fight_pressed(skill_index: int)
 signal catch_pressed(ball_name: String)
@@ -16,7 +17,7 @@ signal item_pressed(item_name: String)
 @onready var catch_btn: Button = $Root/BottomPanel/MarginContainer/HBox/ActionButtons/CatchBtn
 @onready var run_btn: Button = $Root/BottomPanel/MarginContainer/HBox/ActionButtons/RunBtn
 
-# Item/catch submenus (dynamically created containers)
+# Item/catch submenus
 var _item_menu: VBoxContainer
 var _catch_menu: VBoxContainer
 
@@ -34,7 +35,7 @@ var _catch_menu: VBoxContainer
 @onready var enemy_level_label: Label = $Root/EnemyInfo/VBox/TopRow/LevelLabel
 @onready var enemy_status_label: Label = $Root/EnemyInfo/VBox/StatusLabel
 
-# Sprites (now AnimatedSprite2D)
+# Sprites
 @onready var player_sprite: AnimatedSprite2D = $Root/BattleField/PlayerSprite
 @onready var enemy_sprite: AnimatedSprite2D = $Root/BattleField/EnemySprite
 
@@ -47,7 +48,7 @@ var _enemy_sprite_pos := Vector2.ZERO
 
 # Trainer battle state
 var _is_trainer_mode := false
-var _trainer_party_label: Label
+var _trainer_party_dots: HBoxContainer
 
 # Speed toggle indicator
 var _speed_label: Label
@@ -55,11 +56,17 @@ var _speed_label: Label
 # Screen flash overlay
 var _flash_rect: ColorRect
 
+# EXP bar
+var _exp_bar: ProgressBar
+
+# Element badges
+var _player_element_badge: Label
+var _enemy_element_badge: Label
+
 func _ready() -> void:
-	fight_btn.pressed.connect(_on_fight_pressed)
-	items_btn.pressed.connect(_on_items_pressed)
-	catch_btn.pressed.connect(_on_catch_pressed)
-	run_btn.pressed.connect(func(): run_pressed.emit())
+	# Convert action buttons to 2x2 grid
+	_setup_action_grid()
+
 	skill_buttons.visible = false
 	floating_text.visible = false
 
@@ -76,12 +83,12 @@ func _ready() -> void:
 	_catch_menu.custom_minimum_size = Vector2(140, 0)
 	$Root/BottomPanel/MarginContainer/HBox.add_child(_catch_menu)
 
-	# Create trainer party count label (hidden by default)
-	_trainer_party_label = Label.new()
-	_trainer_party_label.name = "TrainerPartyLabel"
-	_trainer_party_label.visible = false
-	_trainer_party_label.add_theme_font_size_override("font_size", 10)
-	$Root/EnemyInfo/VBox.add_child(_trainer_party_label)
+	# Trainer party dots (hidden by default)
+	_trainer_party_dots = HBoxContainer.new()
+	_trainer_party_dots.name = "TrainerPartyDots"
+	_trainer_party_dots.visible = false
+	_trainer_party_dots.add_theme_constant_override("separation", 3)
+	$Root/EnemyInfo/VBox.add_child(_trainer_party_dots)
 
 	# Speed toggle indicator
 	_speed_label = Label.new()
@@ -89,7 +96,7 @@ func _ready() -> void:
 	_speed_label.text = "2x [B]"
 	_speed_label.visible = false
 	_speed_label.add_theme_font_size_override("font_size", 12)
-	_speed_label.add_theme_color_override("font_color", Color(1.0, 1.0, 0.3))
+	_speed_label.add_theme_color_override("font_color", ThemeManager.COL_ACCENT_GOLD)
 	_speed_label.position = Vector2(580, 4)
 	$Root.add_child(_speed_label)
 
@@ -103,6 +110,95 @@ func _ready() -> void:
 	_flash_rect.anchor_bottom = 1.0
 	$Root.add_child(_flash_rect)
 
+	# EXP bar (thin blue bar below player HP bar)
+	_exp_bar = ProgressBar.new()
+	_exp_bar.custom_minimum_size = Vector2(0, 4)
+	_exp_bar.show_percentage = false
+	_exp_bar.max_value = 100
+	_exp_bar.value = 0
+	var exp_fill := StyleBoxFlat.new()
+	exp_fill.bg_color = ThemeManager.COL_ACCENT
+	exp_fill.set_corner_radius_all(1)
+	exp_fill.content_margin_left = 0.0
+	exp_fill.content_margin_right = 0.0
+	exp_fill.content_margin_top = 0.0
+	exp_fill.content_margin_bottom = 0.0
+	_exp_bar.add_theme_stylebox_override("fill", exp_fill)
+	var exp_bg := StyleBoxFlat.new()
+	exp_bg.bg_color = Color(0.08, 0.06, 0.14)
+	exp_bg.set_corner_radius_all(1)
+	exp_bg.content_margin_left = 0.0
+	exp_bg.content_margin_right = 0.0
+	exp_bg.content_margin_top = 0.0
+	exp_bg.content_margin_bottom = 0.0
+	_exp_bar.add_theme_stylebox_override("background", exp_bg)
+	# Insert below HP bar in player info VBox
+	var player_vbox := $Root/PlayerInfo/VBox
+	var hp_bar_idx := player_hp_bar.get_index()
+	player_vbox.add_child(_exp_bar)
+	player_vbox.move_child(_exp_bar, hp_bar_idx + 1)
+
+	# Element badges (inserted below name row)
+	_player_element_badge = Label.new()
+	_player_element_badge.add_theme_font_size_override("font_size", 8)
+	player_vbox.add_child(_player_element_badge)
+	player_vbox.move_child(_player_element_badge, 1)
+
+	_enemy_element_badge = Label.new()
+	_enemy_element_badge.add_theme_font_size_override("font_size", 8)
+	$Root/EnemyInfo/VBox.add_child(_enemy_element_badge)
+	$Root/EnemyInfo/VBox.move_child(_enemy_element_badge, 1)
+
+func _setup_action_grid() -> void:
+	# Replace the VBox action buttons with a 2x2 GridContainer
+	# We keep the existing buttons but rearrange them
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 4)
+	grid.add_theme_constant_override("v_separation", 4)
+
+	# Remove buttons from their parent and add to grid
+	var parent := action_buttons
+	var btns := [fight_btn, items_btn, catch_btn, run_btn]
+	for btn in btns:
+		parent.remove_child(btn)
+
+	# Color-code buttons with left border accent
+	_style_action_button(fight_btn, "Fight", Color(0.9, 0.3, 0.2))
+	_style_action_button(items_btn, "Items", Color(0.3, 0.8, 0.3))
+	_style_action_button(catch_btn, "Catch", Color(0.3, 0.5, 0.9))
+	_style_action_button(run_btn, "Run", Color(0.7, 0.7, 0.5))
+
+	grid.add_child(fight_btn)
+	grid.add_child(items_btn)
+	grid.add_child(catch_btn)
+	grid.add_child(run_btn)
+
+	parent.add_child(grid)
+
+	# Reconnect signals
+	fight_btn.pressed.connect(_on_fight_pressed)
+	items_btn.pressed.connect(_on_items_pressed)
+	catch_btn.pressed.connect(_on_catch_pressed)
+	run_btn.pressed.connect(func(): run_pressed.emit())
+
+func _style_action_button(btn: Button, text: String, accent: Color) -> void:
+	btn.text = text
+	btn.custom_minimum_size = Vector2(65, 28)
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.14, 0.12, 0.24)
+	style.set_corner_radius_all(3)
+	style.border_width_left = 3
+	style.border_color = accent
+	style.content_margin_left = 8.0
+	style.content_margin_right = 6.0
+	style.content_margin_top = 4.0
+	style.content_margin_bottom = 4.0
+	btn.add_theme_stylebox_override("normal", style)
+	var hover := style.duplicate()
+	hover.bg_color = Color(0.18, 0.16, 0.3)
+	btn.add_theme_stylebox_override("hover", hover)
+
 func setup(player_creature: CreatureInstance, enemy_creature: CreatureInstance) -> void:
 	player_name_label.text = player_creature.display_name()
 	player_level_label.text = "Lv.%d" % player_creature.level
@@ -111,6 +207,13 @@ func setup(player_creature: CreatureInstance, enemy_creature: CreatureInstance) 
 
 	update_player_hp(player_creature.current_hp, player_creature.max_hp())
 	update_enemy_hp(enemy_creature.current_hp, enemy_creature.max_hp())
+
+	# Element badges
+	_update_element_badge(_player_element_badge, player_creature.data.element)
+	_update_element_badge(_enemy_element_badge, enemy_creature.data.element)
+
+	# EXP bar
+	update_exp_bar(player_creature)
 
 	# Setup battle sprites with animation
 	_setup_battle_sprite(player_sprite, player_creature.data)
@@ -122,21 +225,47 @@ func setup(player_creature: CreatureInstance, enemy_creature: CreatureInstance) 
 	# Entry slide-in animation
 	_animate_entry()
 
+	# Shiny sparkle effect
+	if enemy_creature.is_shiny:
+		_setup_shiny_sparkle(enemy_sprite)
+		enemy_name_label.text = "\u2605 " + enemy_name_label.text
+	if player_creature.is_shiny:
+		_setup_shiny_sparkle(player_sprite)
+		player_name_label.text = "\u2605 " + player_name_label.text
+
 	if not _is_trainer_mode:
 		_update_ball_count()
 	_build_skill_buttons(player_creature)
 	_update_status_labels(player_creature, enemy_creature)
 
+func _update_element_badge(badge: Label, element: int) -> void:
+	var names := ThemeManager.ELEMENT_NAMES
+	badge.text = names[element] if element < names.size() else "???"
+	var col: Color = ThemeManager.ELEMENT_COLORS.get(element, Color.GRAY)
+	badge.add_theme_color_override("font_color", col)
+
+func update_exp_bar(creature: CreatureInstance) -> void:
+	if not _exp_bar:
+		return
+	var exp_for_next := creature.exp_to_next_level()
+	_exp_bar.max_value = exp_for_next if exp_for_next > 0 else 100
+	_exp_bar.value = creature.exp
+
 func setup_trainer(trainer_name: String, party_count: int) -> void:
 	_is_trainer_mode = true
-	# Show trainer name prefix
 	enemy_name_label.text = "Leader %s's %s" % [trainer_name, enemy_name_label.text]
-	# Hide Catch and Run buttons
 	catch_btn.visible = false
 	run_btn.visible = false
-	# Show party count
-	_trainer_party_label.text = "Party: %d remaining" % party_count
-	_trainer_party_label.visible = true
+
+	# Show trainer party dots
+	for child in _trainer_party_dots.get_children():
+		child.queue_free()
+	for i in party_count:
+		var dot := ColorRect.new()
+		dot.custom_minimum_size = Vector2(6, 6)
+		dot.color = ThemeManager.COL_ACCENT_RED if i == 0 else ThemeManager.COL_ACCENT_GREEN
+		_trainer_party_dots.add_child(dot)
+	_trainer_party_dots.visible = true
 
 func _setup_battle_sprite(sprite: AnimatedSprite2D, data: CreatureData) -> void:
 	var tex: Texture2D = data.battle_texture if data.battle_texture else data.sprite_texture
@@ -146,11 +275,9 @@ func _setup_battle_sprite(sprite: AnimatedSprite2D, data: CreatureData) -> void:
 	var frames := SpriteFrames.new()
 
 	if data.battle_texture:
-		# Battle sheet: 4 frames of 48x48 (idle0, idle1, attack0, attack1)
 		var frame_w := 48
 		var frame_count := tex.get_width() / frame_w
 
-		# Idle animation
 		frames.add_animation("idle")
 		frames.set_animation_speed("idle", 3.0)
 		frames.set_animation_loop("idle", true)
@@ -160,7 +287,6 @@ func _setup_battle_sprite(sprite: AnimatedSprite2D, data: CreatureData) -> void:
 			atlas.region = Rect2(i * frame_w, 0, frame_w, 48)
 			frames.add_frame("idle", atlas)
 
-		# Attack animation
 		frames.add_animation("attack")
 		frames.set_animation_speed("attack", 8.0)
 		frames.set_animation_loop("attack", false)
@@ -170,7 +296,6 @@ func _setup_battle_sprite(sprite: AnimatedSprite2D, data: CreatureData) -> void:
 			atlas.region = Rect2(i * frame_w, 0, frame_w, 48)
 			frames.add_frame("attack", atlas)
 	else:
-		# Fallback: single texture
 		frames.add_animation("idle")
 		frames.add_frame("idle", tex)
 
@@ -219,27 +344,54 @@ func _build_skill_buttons(creature: CreatureInstance) -> void:
 	for child in skill_buttons.get_children():
 		child.queue_free()
 
+	# 2x2 grid for skills
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 4)
+	grid.add_theme_constant_override("v_separation", 4)
+
 	var skills := creature.active_skills if creature.active_skills.size() > 0 else creature.data.skills
 	for i in skills.size():
 		var skill: SkillData = skills[i] as SkillData
 		if not skill:
 			continue
 		var btn := Button.new()
-		btn.text = "%s (Pow:%d)" % [skill.skill_name, skill.power]
-		btn.custom_minimum_size = Vector2(0, 28)
+		# Element color dot + name + power + accuracy
+		var element_col: Color = ThemeManager.ELEMENT_COLORS.get(skill.element, Color.GRAY)
+		btn.text = "%s P:%d A:%d%%" % [skill.skill_name, skill.power, int(skill.accuracy * 100)]
+		btn.custom_minimum_size = Vector2(130, 26)
+		btn.add_theme_font_size_override("font_size", 8)
+
 		# Color-code by category
 		match skill.category:
 			SkillData.Category.STATUS:
 				btn.add_theme_color_override("font_color", Color(0.6, 0.8, 1.0))
 			SkillData.Category.HEAL:
 				btn.add_theme_color_override("font_color", Color(0.4, 1.0, 0.4))
+			_:
+				btn.add_theme_color_override("font_color", element_col)
+
+		# Left border color matching element
+		var style := StyleBoxFlat.new()
+		style.bg_color = Color(0.14, 0.12, 0.24)
+		style.set_corner_radius_all(3)
+		style.border_width_left = 3
+		style.border_color = element_col
+		style.content_margin_left = 6.0
+		style.content_margin_right = 4.0
+		style.content_margin_top = 3.0
+		style.content_margin_bottom = 3.0
+		btn.add_theme_stylebox_override("normal", style)
+
 		var idx := i
 		btn.pressed.connect(func(): _on_skill_selected(idx))
-		skill_buttons.add_child(btn)
+		grid.add_child(btn)
+
+	skill_buttons.add_child(grid)
 
 	var back_btn := Button.new()
 	back_btn.text = "Back"
-	back_btn.custom_minimum_size = Vector2(0, 28)
+	back_btn.custom_minimum_size = Vector2(60, 24)
 	back_btn.pressed.connect(_on_back_pressed)
 	skill_buttons.add_child(back_btn)
 
@@ -272,14 +424,18 @@ func update_status(player_creature: CreatureInstance, enemy_creature: CreatureIn
 
 func _update_status_labels(player_creature: CreatureInstance, enemy_creature: CreatureInstance) -> void:
 	if player_creature and player_creature.status.is_active():
-		player_status_label.text = "[%s]" % player_creature.status.get_status_name()
+		var status_name := player_creature.status.get_status_name()
+		player_status_label.text = "[%s]" % status_name
+		player_status_label.add_theme_color_override("font_color", ThemeManager.get_status_color(status_name))
 		player_status_label.visible = true
 	else:
 		player_status_label.text = ""
 		player_status_label.visible = false
 
 	if enemy_creature and enemy_creature.status.is_active():
-		enemy_status_label.text = "[%s]" % enemy_creature.status.get_status_name()
+		var status_name := enemy_creature.status.get_status_name()
+		enemy_status_label.text = "[%s]" % status_name
+		enemy_status_label.add_theme_color_override("font_color", ThemeManager.get_status_color(status_name))
 		enemy_status_label.visible = true
 	else:
 		enemy_status_label.text = ""
@@ -290,26 +446,25 @@ func _animate_hp_bar(bar: ProgressBar, target: int, max_val: int) -> void:
 	var tween := create_tween()
 	tween.tween_property(bar, "value", float(target), 0.4).set_ease(Tween.EASE_OUT)
 
-	# Color the bar based on HP ratio
 	var ratio := float(target) / float(max_val) if max_val > 0 else 0.0
 	var color: Color
 	if ratio > 0.5:
-		color = Color(0.2, 0.8, 0.2)  # Green
+		color = ThemeManager.COL_ACCENT_GREEN
 	elif ratio > 0.25:
-		color = Color(0.9, 0.8, 0.1)  # Yellow
+		color = Color(0.9, 0.8, 0.1)
 	else:
-		color = Color(0.9, 0.2, 0.1)  # Red
+		color = ThemeManager.COL_ACCENT_RED
 
 	var style := StyleBoxFlat.new()
 	style.bg_color = color
-	style.corner_radius_top_left = 2
-	style.corner_radius_top_right = 2
-	style.corner_radius_bottom_left = 2
-	style.corner_radius_bottom_right = 2
+	style.set_corner_radius_all(2)
+	style.content_margin_left = 0.0
+	style.content_margin_right = 0.0
+	style.content_margin_top = 0.0
+	style.content_margin_bottom = 0.0
 	bar.add_theme_stylebox_override("fill", style)
 
 func _animate_entry() -> void:
-	# Slide sprites in from off-screen
 	var player_start := Vector2(_player_sprite_pos.x - 200, _player_sprite_pos.y)
 	var enemy_start := Vector2(_enemy_sprite_pos.x + 200, _enemy_sprite_pos.y)
 	player_sprite.position = player_start
@@ -320,19 +475,32 @@ func _animate_entry() -> void:
 
 func show_damage_number(amount: int, target_pos: Vector2, is_super: bool = false, is_weak: bool = false) -> void:
 	var dmg_label := Label.new()
-	dmg_label.text = str(amount)
+	if amount == 0 and is_super:
+		dmg_label.text = "!!"
+	elif amount < 0:
+		dmg_label.text = "+%d" % abs(amount)  # Heal prefix
+	else:
+		dmg_label.text = str(amount)
+
 	dmg_label.add_theme_font_size_override("font_size", 16 if is_super else (10 if is_weak else 13))
 	if is_super:
-		dmg_label.add_theme_color_override("font_color", Color(1.0, 0.2, 0.1))
+		dmg_label.add_theme_color_override("font_color", ThemeManager.COL_ACCENT_RED)
 	elif is_weak:
 		dmg_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+	elif amount < 0:
+		dmg_label.add_theme_color_override("font_color", ThemeManager.COL_ACCENT_GREEN)
 	else:
 		dmg_label.add_theme_color_override("font_color", Color.WHITE)
 	dmg_label.position = target_pos + Vector2(-10, -20)
 	$Root.add_child(dmg_label)
+
+	# Scale-up pop tween (1.0 -> 1.3 -> 1.0)
+	dmg_label.scale = Vector2(1.0, 1.0)
 	var tween := create_tween()
-	tween.tween_property(dmg_label, "position:y", dmg_label.position.y - 30, 0.6)
-	tween.parallel().tween_property(dmg_label, "modulate:a", 0.0, 0.6)
+	tween.tween_property(dmg_label, "scale", Vector2(1.3, 1.3), 0.1)
+	tween.tween_property(dmg_label, "scale", Vector2(1.0, 1.0), 0.1)
+	tween.tween_property(dmg_label, "position:y", dmg_label.position.y - 30, 0.5)
+	tween.parallel().tween_property(dmg_label, "modulate:a", 0.0, 0.5)
 	tween.tween_callback(func(): dmg_label.queue_free())
 
 func flash_screen(color: Color = Color.WHITE, duration: float = 0.15) -> void:
@@ -416,6 +584,25 @@ func _build_catch_menu() -> void:
 		action_buttons.visible = true
 	)
 	_catch_menu.add_child(back)
+
+func _setup_shiny_sparkle(target_sprite: AnimatedSprite2D) -> void:
+	var particles := CPUParticles2D.new()
+	particles.emitting = true
+	particles.amount = 6
+	particles.lifetime = 1.5
+	particles.one_shot = false
+	particles.explosiveness = 0.0
+	particles.direction = Vector2(0, -1)
+	particles.spread = 180.0
+	particles.gravity = Vector2(0, 20)
+	particles.initial_velocity_min = 10.0
+	particles.initial_velocity_max = 25.0
+	particles.scale_amount_min = 1.0
+	particles.scale_amount_max = 2.0
+	particles.color = Color(1.0, 0.95, 0.3, 0.8)
+	particles.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	particles.emission_rect_extents = Vector2(16, 16)
+	target_sprite.add_child(particles)
 
 func _on_skill_selected(index: int) -> void:
 	skill_buttons.visible = false

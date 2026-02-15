@@ -10,6 +10,10 @@ extends Resource
 @export var exp: int = 0
 @export var is_nft: bool = false
 @export var nft_token_id: int = -1
+@export var is_shiny: bool = false
+
+const SHINY_RATE := 1.0 / 200.0
+const SHINY_CHARM_RATE := 1.0 / 50.0
 
 # Active skills (up to 4 slots)
 @export var active_skills: Array[Resource] = []
@@ -173,6 +177,9 @@ func evolve() -> void:
 		nickname = data.species_name
 	# Re-init skills for new species
 	_init_skills_for_level()
+	# Track quest/stats
+	QuestManager.increment_quest("evolve")
+	StatsManager.increment("creatures_evolved")
 
 ## Get skills the creature should learn at its current level (not yet in active_skills).
 func get_pending_new_skills() -> Array[Resource]:
@@ -209,6 +216,13 @@ func try_learn_skill(skill: Resource) -> bool:
 func replace_skill(index: int, new_skill: Resource) -> void:
 	if index >= 0 and index < active_skills.size():
 		active_skills[index] = new_skill
+
+## Roll whether this creature is shiny. Uses Shiny Charm rate if unlocked.
+func roll_shiny() -> void:
+	var rate := SHINY_RATE
+	if DexManager and DexManager.has_meta("has_shiny_charm"):
+		rate = SHINY_CHARM_RATE
+	is_shiny = randf() < rate
 
 ## Reset battle-only modifiers (call after battle ends).
 func reset_battle_modifiers() -> void:

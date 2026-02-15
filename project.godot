@@ -25,6 +25,10 @@ NetworkManager="*res://autoloads/network_manager.gd"
 DexManager="*res://autoloads/dex_manager.gd"
 BadgeManager="*res://autoloads/badge_manager.gd"
 TimeManager="*res://autoloads/time_manager.gd"
+DailyRewardManager="*res://autoloads/daily_reward_manager.gd"
+QuestManager="*res://autoloads/quest_manager.gd"
+StatsManager="*res://autoloads/stats_manager.gd"
+TutorialManager="*res://autoloads/tutorial_manager.gd"
 
 [display]
 

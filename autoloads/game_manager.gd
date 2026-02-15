@@ -23,6 +23,7 @@ func _setup_input_actions() -> void:
 	_add_key_action("run", KEY_SHIFT)
 	_add_key_action("toggle_battle_speed", KEY_B)
 	_add_key_action("open_dex", KEY_X)
+	_add_key_action("open_quests", KEY_Q)
 
 func _add_key_action(action_name: String, key1: Key, key2: Key = KEY_NONE) -> void:
 	if not InputMap.has_action(action_name):

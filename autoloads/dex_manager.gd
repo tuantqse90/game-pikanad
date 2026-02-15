@@ -66,6 +66,8 @@ func _grant_reward(reward_name: String) -> void:
 			if InventoryManager:
 				InventoryManager.add_item("Master Ball", 1)
 				InventoryManager.register_item("Master Ball", "res://resources/items/master_ball.tres")
+		"Shiny Charm":
+			set_meta("has_shiny_charm", true)
 
 func serialize() -> Dictionary:
 	var data := {}
@@ -92,3 +94,7 @@ func deserialize(data: Dictionary) -> void:
 	for threshold in granted_rewards:
 		var reward_key := "dex_reward_%d" % int(threshold)
 		set_meta(reward_key, true)
+	# Restore Shiny Charm flag if 50% reward was earned
+	var charm_threshold := int(TOTAL_SPECIES * 0.50)
+	if has_meta("dex_reward_%d" % charm_threshold):
+		set_meta("has_shiny_charm", true)

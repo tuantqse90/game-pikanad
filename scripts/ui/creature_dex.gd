@@ -1,6 +1,7 @@
 extends CanvasLayer
 
-## Creature Dex — grid view of all species with seen/caught status.
+## Creature Dex — grid cards with element-colored borders,
+## gold stars for caught, silver for seen, dark "?" for unseen.
 
 @onready var panel: PanelContainer = $Panel
 @onready var header_label: Label = $Panel/VBox/HeaderLabel
@@ -21,8 +22,10 @@ func _ready() -> void:
 	close_btn.pressed.connect(close_dex)
 	_load_all_creatures()
 
+	# Style header
+	header_label.add_theme_color_override("font_color", ThemeManager.COL_ACCENT_GOLD)
+
 func _load_all_creatures() -> void:
-	# Load all creature data resources, sorted by dex_number
 	var creature_paths := [
 		"res://resources/creatures/flamepup.tres",
 		"res://resources/creatures/blazefox.tres",
@@ -66,24 +69,70 @@ func _refresh_grid() -> void:
 
 	for creature in _all_creatures:
 		var status := DexManager.get_status(creature.species_id) if DexManager else DexManager.DexStatus.UNSEEN
-		var btn := Button.new()
-		btn.custom_minimum_size = Vector2(100, 36)
+		var card := PanelContainer.new()
+		card.custom_minimum_size = Vector2(100, 40)
 
+		# Element-colored border for caught, silver for seen, dark for unseen
+		var card_style := StyleBoxFlat.new()
+		card_style.bg_color = ThemeManager.COL_BG_PANEL_LIGHT
+		card_style.set_corner_radius_all(3)
+		card_style.set_border_width_all(1)
+		card_style.content_margin_left = 4.0
+		card_style.content_margin_right = 4.0
+		card_style.content_margin_top = 3.0
+		card_style.content_margin_bottom = 3.0
+
+		var label_text := ""
 		match status:
 			DexManager.DexStatus.UNSEEN:
-				btn.text = "#%d ???" % creature.dex_number
-				btn.modulate = Color(0.4, 0.4, 0.4)
+				card_style.border_color = Color(0.2, 0.18, 0.28)
+				card_style.bg_color = Color(0.08, 0.06, 0.12)
+				label_text = "#%d ?" % creature.dex_number
 			DexManager.DexStatus.SEEN:
-				btn.text = "#%d %s" % [creature.dex_number, creature.species_name]
-				btn.modulate = Color(0.8, 0.8, 0.8)
+				card_style.border_color = Color(0.5, 0.5, 0.55)
+				label_text = "#%d %s" % [creature.dex_number, creature.species_name]
 			DexManager.DexStatus.CAUGHT:
-				btn.text = "#%d %s *" % [creature.dex_number, creature.species_name]
-				btn.modulate = Color(1.0, 1.0, 1.0)
+				var el_col: Color = ThemeManager.ELEMENT_COLORS.get(creature.element, Color.GRAY)
+				card_style.border_color = el_col
+				label_text = "#%d %s \u2605" % [creature.dex_number, creature.species_name]
+
+		card.add_theme_stylebox_override("panel", card_style)
+
+		var hbox := HBoxContainer.new()
+		hbox.add_theme_constant_override("separation", 4)
+		card.add_child(hbox)
+
+		# Sprite thumbnail (colored rect)
+		if status != DexManager.DexStatus.UNSEEN:
+			var thumb := ColorRect.new()
+			thumb.custom_minimum_size = Vector2(14, 14)
+			thumb.color = ThemeManager.ELEMENT_COLORS.get(creature.element, Color.GRAY)
+			if status == DexManager.DexStatus.SEEN:
+				thumb.modulate = Color(0.6, 0.6, 0.6)
+			hbox.add_child(thumb)
+
+		var lbl := Label.new()
+		lbl.text = label_text
+		lbl.add_theme_font_size_override("font_size", 9)
+		if status == DexManager.DexStatus.UNSEEN:
+			lbl.add_theme_color_override("font_color", Color(0.35, 0.32, 0.42))
+		elif status == DexManager.DexStatus.CAUGHT:
+			lbl.add_theme_color_override("font_color", ThemeManager.COL_ACCENT_GOLD)
+		hbox.add_child(lbl)
 
 		var creature_ref := creature
 		var status_ref := status
-		btn.pressed.connect(func(): _show_detail(creature_ref, status_ref))
-		grid.add_child(btn)
+		# Make the card clickable via input
+		var btn_overlay := Button.new()
+		btn_overlay.flat = true
+		btn_overlay.anchors_preset = Control.PRESET_FULL_RECT
+		btn_overlay.anchor_right = 1.0
+		btn_overlay.anchor_bottom = 1.0
+		btn_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+		btn_overlay.pressed.connect(func(): _show_detail(creature_ref, status_ref))
+		card.add_child(btn_overlay)
+
+		grid.add_child(card)
 
 func _show_detail(creature: CreatureData, status: int) -> void:
 	if status == DexManager.DexStatus.UNSEEN:
@@ -96,7 +145,7 @@ func _show_detail(creature: CreatureData, status: int) -> void:
 	detail_panel.visible = true
 	detail_sprite.texture = creature.sprite_texture
 
-	var element_names := ["Fire", "Water", "Grass", "Wind", "Earth", "Neutral"]
+	var element_names := ThemeManager.ELEMENT_NAMES
 	var rarity_names := ["Common", "Uncommon", "Rare", "Legendary"]
 
 	detail_info.text = "%s\n%s | %s" % [

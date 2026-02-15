@@ -14,6 +14,7 @@ const ZONE_PORTAL_SCENE := preload("res://scenes/world/zone_portal.tscn")
 
 var zone_species: Array[CreatureData] = []
 var _canvas_modulate: CanvasModulate
+var _quest_panel: Node
 
 @onready var player: CharacterBody2D = $Player
 @onready var background: ColorRect = $Background
@@ -46,6 +47,9 @@ func _ready() -> void:
 	_setup_day_night()
 	_setup_weather()
 	_setup_minimap()
+
+	# Track zone visit for stats
+	StatsManager.add_zone(zone_name)
 
 func _spawn_wild_creatures() -> void:
 	if zone_species.is_empty():
@@ -89,7 +93,7 @@ func _setup_minimap() -> void:
 	minimap_layer.layer = 90
 	add_child(minimap_layer)
 	var minimap := preload("res://scripts/ui/minimap.gd").new()
-	minimap.setup(self)
+	minimap.setup(self, zone_name)
 	minimap_layer.add_child(minimap)
 
 func _setup_weather() -> void:
@@ -99,3 +103,13 @@ func _setup_weather() -> void:
 		GameManager.set_meta("zone_weather", weather)
 	else:
 		GameManager.set_meta("zone_weather", WeatherSystem.WeatherType.CLEAR)
+
+func _input(event: InputEvent) -> void:
+	if GameManager.state != GameManager.GameState.OVERWORLD:
+		return
+	if event.is_action_pressed("open_quests") and not _quest_panel:
+		_quest_panel = load("res://scripts/ui/quest_panel.gd").new()
+		add_child(_quest_panel)
+		_quest_panel.closed.connect(func():
+			_quest_panel = null
+		)
