@@ -106,7 +106,8 @@ func serialize_party() -> Array:
 		if creature.is_fainted():
 			continue
 		var skills := []
-		for skill_res in creature.data.skills:
+		var skill_source = creature.active_skills if creature.active_skills.size() > 0 else creature.data.skills
+		for skill_res in skill_source:
 			var skill: SkillData = skill_res as SkillData
 			if skill:
 				skills.append({

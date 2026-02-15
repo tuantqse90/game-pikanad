@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="CreatureData" load_steps=7 format=3]
+[gd_resource type="Resource" script_class="CreatureData" load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://resources/creature_data.gd" id="1"]
 [ext_resource type="Resource" path="res://resources/skills/vine_whip.tres" id="2"]
@@ -6,6 +6,7 @@
 [ext_resource type="Texture2D" path="res://assets/sprites/floravine.png" id="4"]
 [ext_resource type="Texture2D" path="res://assets/sprites/floravine_battle.png" id="5"]
 [ext_resource type="Texture2D" path="res://assets/sprites/floravine_overworld.png" id="6"]
+[ext_resource type="Resource" path="res://resources/creatures/elderoak.tres" id="7"]
 
 [resource]
 script = ExtResource("1")
@@ -23,3 +24,7 @@ battle_texture = ExtResource("5")
 overworld_texture = ExtResource("6")
 capture_rate = 0.35
 exp_yield = 36
+evolution_level = 28
+evolves_into = ExtResource("7")
+learn_set = [{"level": 1, "skill_path": "res://resources/skills/tackle.tres"}, {"level": 1, "skill_path": "res://resources/skills/vine_whip.tres"}, {"level": 7, "skill_path": "res://resources/skills/leech_seed.tres"}, {"level": 11, "skill_path": "res://resources/skills/spore_cloud.tres"}, {"level": 15, "skill_path": "res://resources/skills/razor_leaf.tres"}, {"level": 20, "skill_path": "res://resources/skills/natures_wrath.tres"}, {"level": 26, "skill_path": "res://resources/skills/rest.tres"}]
+dex_number = 8

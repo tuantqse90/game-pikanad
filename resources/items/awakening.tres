@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/item_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+item_name = "Awakening"
+item_type = 3
+description = "Cures sleep and paralysis."
+price = 50
+effect_value = 2
+usable_in_battle = true
+usable_in_overworld = true

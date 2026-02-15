@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_name = "Drain Life"
+element = 5
+power = 50
+accuracy = 1.0
+description = "Drains life from the foe. Heals 50% of damage."
+drain_percent = 0.5

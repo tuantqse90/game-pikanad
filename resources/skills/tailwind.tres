@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_name = "Tailwind"
+element = 3
+power = 0
+accuracy = 1.0
+description = "Summons a tailwind, boosting speed."
+category = 1
+buff_stat = "spd"
+buff_duration = 3

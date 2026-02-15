@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_name = "Rest"
+element = 5
+power = 0
+accuracy = 1.0
+description = "Fully restores HP but falls asleep."
+category = 2
+heal_percent = 1.0
+self_inflicts = 3
+self_status_duration = 3

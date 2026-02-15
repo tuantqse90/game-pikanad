@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_name = "Sand Tomb"
+element = 4
+power = 50
+accuracy = 0.9
+description = "Traps the foe in swirling sand."
+inflicts_status = 4
+status_chance = 0.2
+status_duration = 2

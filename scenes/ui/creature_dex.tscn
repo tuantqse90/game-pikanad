@@ -1,0 +1,57 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/creature_dex.gd" id="1"]
+
+[node name="CreatureDex" type="CanvasLayer"]
+layer = 5
+script = ExtResource("1")
+
+[node name="Panel" type="PanelContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="Panel"]
+
+[node name="HeaderLabel" type="Label" parent="Panel/VBox"]
+custom_minimum_size = Vector2(0, 30)
+text = "Pikanadex - 0/15 caught"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ScrollContainer" type="ScrollContainer" parent="Panel/VBox"]
+size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 150)
+
+[node name="Grid" type="GridContainer" parent="Panel/VBox/ScrollContainer"]
+size_flags_horizontal = 3
+columns = 5
+
+[node name="DetailPanel" type="PanelContainer" parent="Panel/VBox"]
+visible = false
+custom_minimum_size = Vector2(0, 100)
+
+[node name="DetailVBox" type="VBoxContainer" parent="Panel/VBox/DetailPanel"]
+
+[node name="DetailTop" type="HBoxContainer" parent="Panel/VBox/DetailPanel/DetailVBox"]
+
+[node name="DetailSprite" type="TextureRect" parent="Panel/VBox/DetailPanel/DetailVBox/DetailTop"]
+custom_minimum_size = Vector2(48, 48)
+expand_mode = 1
+stretch_mode = 5
+
+[node name="DetailInfo" type="Label" parent="Panel/VBox/DetailPanel/DetailVBox/DetailTop"]
+size_flags_horizontal = 3
+text = "CreatureName
+Element | Rarity"
+vertical_alignment = 1
+
+[node name="DetailStats" type="Label" parent="Panel/VBox/DetailPanel/DetailVBox"]
+text = "HP:40 ATK:10 DEF:8 SPD:10"
+horizontal_alignment = 1
+
+[node name="CloseBtn" type="Button" parent="Panel/VBox"]
+custom_minimum_size = Vector2(0, 30)
+text = "Close"

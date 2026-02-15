@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_name = "Quick Attack"
+element = 5
+power = 35
+accuracy = 1.0
+description = "A swift strike that always goes first."
+is_priority = true

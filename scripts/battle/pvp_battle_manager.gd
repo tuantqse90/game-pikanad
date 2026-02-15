@@ -136,8 +136,14 @@ func _make_creature(data: Dictionary) -> CreatureInstance:
 		default_skill.element = 0
 		creature_data.skills.append(default_skill)
 
+	# Copy skills to active_skills for HUD compatibility
+	var instance_skills: Array[Resource] = []
+	for s in creature_data.skills:
+		instance_skills.append(s)
+
 	var instance := CreatureInstance.new(creature_data, data.get("level", 5))
 	instance.current_hp = data.get("hp", instance.max_hp())
+	instance.active_skills = instance_skills
 	return instance
 
 func _change_state(new_state: BattleState) -> void:

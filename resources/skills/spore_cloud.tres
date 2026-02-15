@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_name = "Spore Cloud"
+element = 2
+power = 0
+accuracy = 0.8
+description = "Releases sleep-inducing spores."
+category = 1
+inflicts_status = 3
+status_chance = 1.0

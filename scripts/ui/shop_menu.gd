@@ -50,13 +50,9 @@ func _refresh() -> void:
 
 func _buy_item(item: ItemData) -> void:
 	if InventoryManager.spend_gold(item.price):
-		match item.item_type:
-			ItemData.ItemType.CAPTURE_BALL:
-				GameManager.capture_items += item.effect_value
-			ItemData.ItemType.POTION:
-				InventoryManager.add_item(item.item_name, 1)
-			_:
-				InventoryManager.add_item(item.item_name, 1)
+		# All items go to unified inventory
+		InventoryManager.add_item(item.item_name, 1)
+		InventoryManager.register_item(item.item_name, item.resource_path)
 		_refresh()
 	else:
 		gold_label.text = "Gold: %d (Not enough!)" % InventoryManager.gold

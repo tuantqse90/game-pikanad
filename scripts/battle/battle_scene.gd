@@ -5,6 +5,9 @@ extends Node2D
 @onready var battle_manager: Node = $BattleManager
 @onready var hud = $BattleHUD
 
+var _evolution_screen: Node
+var _skill_dialog: Node
+
 func _ready() -> void:
 	# Connect manager -> HUD
 	battle_manager.battle_message.connect(hud.show_message)
@@ -18,10 +21,19 @@ func _ready() -> void:
 	battle_manager.enemy_attacked.connect(_on_enemy_attacked)
 	battle_manager.effectiveness_text.connect(_on_effectiveness_text)
 
+	# Connect status signals
+	battle_manager.status_inflicted.connect(_on_status_changed)
+	battle_manager.status_expired.connect(_on_status_changed)
+
+	# Connect evolution + skill learning
+	battle_manager.evolution_ready.connect(_on_evolution_ready)
+	battle_manager.skill_learned.connect(_on_skill_learned)
+
 	# Connect HUD -> manager
 	hud.fight_pressed.connect(battle_manager.player_fight)
 	hud.catch_pressed.connect(battle_manager.player_catch)
 	hud.run_pressed.connect(battle_manager.player_run)
+	hud.item_pressed.connect(battle_manager.player_use_item)
 
 	# Start the battle
 	battle_manager.start_battle()
@@ -35,6 +47,9 @@ func _on_state_changed(new_state: int) -> void:
 	# Show action buttons only during PLAYER_TURN
 	var is_player_turn = (new_state == battle_manager.BattleState.PLAYER_TURN)
 	hud.show_actions(is_player_turn)
+	# Update status labels
+	if battle_manager.player_creature and battle_manager.enemy_creature:
+		hud.update_status(battle_manager.player_creature, battle_manager.enemy_creature)
 
 func _on_player_attacked() -> void:
 	hud.play_attack_anim(hud.player_sprite)
@@ -51,6 +66,47 @@ func _on_effectiveness_text(text: String, effectiveness: float) -> void:
 	elif effectiveness < 0.8:
 		color = Color(0.5, 0.5, 0.7)  # Muted blue for not very effective
 	hud.show_floating_text(text, color)
+
+func _on_status_changed(_target_name: String, _status_name: String) -> void:
+	if battle_manager.player_creature and battle_manager.enemy_creature:
+		hud.update_status(battle_manager.player_creature, battle_manager.enemy_creature)
+
+func _on_evolution_ready(creature: CreatureInstance) -> void:
+	# Load and show evolution screen
+	var evo_scene := load("res://scenes/ui/evolution_screen.tscn")
+	_evolution_screen = evo_scene.instantiate()
+	add_child(_evolution_screen)
+	_evolution_screen.show_evolution(creature)
+	_evolution_screen.evolution_confirmed.connect(_on_evolution_done)
+	_evolution_screen.evolution_cancelled.connect(_on_evolution_done)
+
+func _on_evolution_done() -> void:
+	if _evolution_screen:
+		_evolution_screen.queue_free()
+		_evolution_screen = null
+	# Update HUD with potentially new creature data
+	if battle_manager.player_creature:
+		hud.setup(battle_manager.player_creature, battle_manager.enemy_creature)
+	await get_tree().create_timer(1.0).timeout
+	battle_manager.finish_battle_after_evolution()
+
+func _on_skill_learned(creature: CreatureInstance, skill: Resource) -> void:
+	# If creature has 4 skills, show replacement dialog
+	if creature.active_skills.size() >= 4:
+		var dialog_scene := load("res://scenes/ui/skill_replace_dialog.tscn")
+		_skill_dialog = dialog_scene.instantiate()
+		add_child(_skill_dialog)
+		_skill_dialog.show_dialog(creature, skill)
+		_skill_dialog.skill_replaced.connect(func(_idx): _on_skill_dialog_closed())
+		_skill_dialog.skill_cancelled.connect(_on_skill_dialog_closed)
+
+func _on_skill_dialog_closed() -> void:
+	if _skill_dialog:
+		_skill_dialog.queue_free()
+		_skill_dialog = null
+	# Rebuild skill buttons with new skills
+	if battle_manager.player_creature:
+		hud._build_skill_buttons(battle_manager.player_creature)
 
 func _on_battle_ended(result: String) -> void:
 	match result:

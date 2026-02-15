@@ -34,7 +34,7 @@ layout_mode = 0
 offset_left = 380.0
 offset_top = 15.0
 offset_right = 625.0
-offset_bottom = 100.0
+offset_bottom = 110.0
 
 [node name="VBox" type="VBoxContainer" parent="Root/EnemyInfo"]
 
@@ -59,12 +59,17 @@ show_percentage = false
 text = "100 / 100"
 horizontal_alignment = 1
 
+[node name="StatusLabel" type="Label" parent="Root/EnemyInfo/VBox"]
+visible = false
+text = ""
+horizontal_alignment = 1
+
 [node name="PlayerInfo" type="PanelContainer" parent="Root"]
 layout_mode = 0
 offset_left = 15.0
 offset_top = 195.0
 offset_right = 260.0
-offset_bottom = 280.0
+offset_bottom = 290.0
 
 [node name="VBox" type="VBoxContainer" parent="Root/PlayerInfo"]
 
@@ -87,6 +92,11 @@ show_percentage = false
 
 [node name="HPLabel" type="Label" parent="Root/PlayerInfo/VBox"]
 text = "100 / 100"
+horizontal_alignment = 1
+
+[node name="StatusLabel" type="Label" parent="Root/PlayerInfo/VBox"]
+visible = false
+text = ""
 horizontal_alignment = 1
 
 [node name="FloatingText" type="Label" parent="Root"]
@@ -128,15 +138,19 @@ autowrap_mode = 2
 custom_minimum_size = Vector2(140, 0)
 
 [node name="FightBtn" type="Button" parent="Root/BottomPanel/MarginContainer/HBox/ActionButtons"]
-custom_minimum_size = Vector2(0, 28)
+custom_minimum_size = Vector2(0, 22)
 text = "Fight"
 
+[node name="ItemsBtn" type="Button" parent="Root/BottomPanel/MarginContainer/HBox/ActionButtons"]
+custom_minimum_size = Vector2(0, 22)
+text = "Items"
+
 [node name="CatchBtn" type="Button" parent="Root/BottomPanel/MarginContainer/HBox/ActionButtons"]
-custom_minimum_size = Vector2(0, 28)
+custom_minimum_size = Vector2(0, 22)
 text = "Catch (5)"
 
 [node name="RunBtn" type="Button" parent="Root/BottomPanel/MarginContainer/HBox/ActionButtons"]
-custom_minimum_size = Vector2(0, 28)
+custom_minimum_size = Vector2(0, 22)
 text = "Run"
 
 [node name="SkillButtons" type="VBoxContainer" parent="Root/BottomPanel/MarginContainer/HBox"]

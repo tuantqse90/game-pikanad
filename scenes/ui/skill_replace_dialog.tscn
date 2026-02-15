@@ -1,0 +1,45 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/skill_replace_dialog.gd" id="1"]
+
+[node name="SkillReplaceDialog" type="CanvasLayer"]
+layer = 10
+script = ExtResource("1")
+
+[node name="Overlay" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.7)
+
+[node name="CenterContainer" type="CenterContainer" parent="Overlay"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="Overlay/CenterContainer"]
+custom_minimum_size = Vector2(350, 250)
+
+[node name="VBox" type="VBoxContainer" parent="Overlay/CenterContainer/Panel"]
+
+[node name="TitleLabel" type="Label" parent="Overlay/CenterContainer/Panel/VBox"]
+custom_minimum_size = Vector2(0, 25)
+text = "Replace a skill?"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="NewSkillLabel" type="Label" parent="Overlay/CenterContainer/Panel/VBox"]
+custom_minimum_size = Vector2(0, 25)
+text = "New: SkillName"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SkillList" type="VBoxContainer" parent="Overlay/CenterContainer/Panel/VBox"]
+
+[node name="CancelBtn" type="Button" parent="Overlay/CenterContainer/Panel/VBox"]
+custom_minimum_size = Vector2(0, 30)
+text = "Don't Learn"

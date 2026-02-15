@@ -22,6 +22,7 @@ InventoryManager="*res://autoloads/inventory_manager.gd"
 Web3Manager="*res://autoloads/web3_manager.gd"
 SaveManager="*res://autoloads/save_manager.gd"
 NetworkManager="*res://autoloads/network_manager.gd"
+DexManager="*res://autoloads/dex_manager.gd"
 
 [display]
 

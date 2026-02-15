@@ -58,6 +58,11 @@ visible = false
 custom_minimum_size = Vector2(200, 40)
 text = "Continue"
 
+[node name="DexBtn" type="Button" parent="CenterContainer/VBoxContainer"]
+visible = false
+custom_minimum_size = Vector2(200, 40)
+text = "Pikanadex"
+
 [node name="WalletBtn" type="Button" parent="CenterContainer/VBoxContainer"]
 visible = false
 custom_minimum_size = Vector2(200, 40)

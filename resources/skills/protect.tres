@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="SkillData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/skill_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+skill_name = "Protect"
+element = 5
+power = 0
+accuracy = 1.0
+description = "Protects against all attacks for one turn."
+category = 1
+is_protect = true

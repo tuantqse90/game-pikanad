@@ -5,10 +5,12 @@ extends Node
 enum GameState { MENU, OVERWORLD, BATTLE, PAUSED }
 
 var state: GameState = GameState.MENU
-var capture_items: int = 5  # Starting capture balls
+var capture_items: int = 5  # DEPRECATED — kept for save migration only
 
 func _ready() -> void:
 	_setup_input_actions()
+	# Migrate starting capture balls to inventory
+	_migrate_starting_balls()
 
 func _setup_input_actions() -> void:
 	_add_key_action("move_up", KEY_W, KEY_UP)
@@ -34,3 +36,9 @@ func _add_key_action(action_name: String, key1: Key, key2: Key = KEY_NONE) -> vo
 
 func change_state(new_state: GameState) -> void:
 	state = new_state
+
+func _migrate_starting_balls() -> void:
+	# On new game, give starting capture balls via inventory instead
+	if capture_items > 0 and InventoryManager:
+		InventoryManager.add_item("Capture Ball", capture_items)
+		capture_items = 0

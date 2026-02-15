@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="CreatureData" load_steps=7 format=3]
+[gd_resource type="Resource" script_class="CreatureData" load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://resources/creature_data.gd" id="1"]
 [ext_resource type="Resource" path="res://resources/skills/tackle.tres" id="2"]
@@ -6,6 +6,7 @@
 [ext_resource type="Texture2D" path="res://assets/sprites/aquafin.png" id="4"]
 [ext_resource type="Texture2D" path="res://assets/sprites/aquafin_battle.png" id="5"]
 [ext_resource type="Texture2D" path="res://assets/sprites/aquafin_overworld.png" id="6"]
+[ext_resource type="Resource" path="res://resources/creatures/tidecrab.tres" id="7"]
 
 [resource]
 script = ExtResource("1")
@@ -23,3 +24,7 @@ battle_texture = ExtResource("5")
 overworld_texture = ExtResource("6")
 capture_rate = 0.4
 exp_yield = 30
+evolution_level = 12
+evolves_into = ExtResource("7")
+learn_set = [{"level": 1, "skill_path": "res://resources/skills/tackle.tres"}, {"level": 3, "skill_path": "res://resources/skills/splash.tres"}, {"level": 7, "skill_path": "res://resources/skills/bubble_trap.tres"}, {"level": 10, "skill_path": "res://resources/skills/aqua_heal.tres"}, {"level": 14, "skill_path": "res://resources/skills/tidal_wave.tres"}]
+dex_number = 4

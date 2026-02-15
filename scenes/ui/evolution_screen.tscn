@@ -1,0 +1,72 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/evolution_screen.gd" id="1"]
+
+[node name="EvolutionScreen" type="CanvasLayer"]
+layer = 10
+script = ExtResource("1")
+
+[node name="Overlay" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.7)
+
+[node name="CenterContainer" type="CenterContainer" parent="Overlay"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="Overlay/CenterContainer"]
+custom_minimum_size = Vector2(400, 250)
+
+[node name="VBox" type="VBoxContainer" parent="Overlay/CenterContainer/Panel"]
+alignment = 1
+
+[node name="TitleLabel" type="Label" parent="Overlay/CenterContainer/Panel/VBox"]
+custom_minimum_size = Vector2(0, 30)
+text = "Evolution!"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SpritesContainer" type="HBoxContainer" parent="Overlay/CenterContainer/Panel/VBox"]
+custom_minimum_size = Vector2(0, 80)
+alignment = 1
+
+[node name="OldSprite" type="TextureRect" parent="Overlay/CenterContainer/Panel/VBox/SpritesContainer"]
+custom_minimum_size = Vector2(64, 64)
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ArrowLabel" type="Label" parent="Overlay/CenterContainer/Panel/VBox/SpritesContainer"]
+custom_minimum_size = Vector2(60, 0)
+text = ">>>"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="NewSprite" type="TextureRect" parent="Overlay/CenterContainer/Panel/VBox/SpritesContainer"]
+custom_minimum_size = Vector2(64, 64)
+expand_mode = 1
+stretch_mode = 5
+
+[node name="InfoLabel" type="Label" parent="Overlay/CenterContainer/Panel/VBox"]
+custom_minimum_size = Vector2(0, 30)
+text = "Creature is evolving!"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="ButtonRow" type="HBoxContainer" parent="Overlay/CenterContainer/Panel/VBox"]
+alignment = 1
+
+[node name="EvolveBtn" type="Button" parent="Overlay/CenterContainer/Panel/VBox/ButtonRow"]
+custom_minimum_size = Vector2(120, 36)
+text = "Evolve!"
+
+[node name="StopBtn" type="Button" parent="Overlay/CenterContainer/Panel/VBox/ButtonRow"]
+custom_minimum_size = Vector2(120, 36)
+text = "Stop"

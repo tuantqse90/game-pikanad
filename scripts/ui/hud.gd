@@ -12,18 +12,17 @@ func _ready() -> void:
 	gold_label = get_node_or_null("HBoxContainer/GoldLabel")
 	if InventoryManager:
 		InventoryManager.gold_changed.connect(_update_gold)
+		InventoryManager.inventory_changed.connect(_update_display)
 	# PvP button
 	var pvp_btn := get_node_or_null("PvPButton") as Button
 	if pvp_btn:
 		pvp_btn.pressed.connect(func(): SceneManager.go_to_pvp_queue())
 	_update_display()
 
-func _process(_delta: float) -> void:
-	capture_label.text = "Balls: %d" % GameManager.capture_items
-
 func _update_display() -> void:
 	party_label.text = "Party: %d/6" % PartyManager.party_size()
-	capture_label.text = "Balls: %d" % GameManager.capture_items
+	var total_balls := InventoryManager.get_total_ball_count() if InventoryManager else 0
+	capture_label.text = "Balls: %d" % total_balls
 	_update_gold(InventoryManager.gold if InventoryManager else 0)
 
 func _update_gold(amount: int) -> void:

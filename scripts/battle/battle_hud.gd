@@ -3,28 +3,36 @@ extends CanvasLayer
 ## Battle HUD — action menu, HP bars, message log, animated battle sprites.
 
 signal fight_pressed(skill_index: int)
-signal catch_pressed
+signal catch_pressed(ball_name: String)
 signal run_pressed
+signal item_pressed(item_name: String)
 
 # Bottom panel
 @onready var message_label: Label = $Root/BottomPanel/MarginContainer/HBox/MessageLabel
 @onready var action_buttons: VBoxContainer = $Root/BottomPanel/MarginContainer/HBox/ActionButtons
 @onready var skill_buttons: VBoxContainer = $Root/BottomPanel/MarginContainer/HBox/SkillButtons
 @onready var fight_btn: Button = $Root/BottomPanel/MarginContainer/HBox/ActionButtons/FightBtn
+@onready var items_btn: Button = $Root/BottomPanel/MarginContainer/HBox/ActionButtons/ItemsBtn
 @onready var catch_btn: Button = $Root/BottomPanel/MarginContainer/HBox/ActionButtons/CatchBtn
 @onready var run_btn: Button = $Root/BottomPanel/MarginContainer/HBox/ActionButtons/RunBtn
+
+# Item/catch submenus (dynamically created containers)
+var _item_menu: VBoxContainer
+var _catch_menu: VBoxContainer
 
 # Player info
 @onready var player_name_label: Label = $Root/PlayerInfo/VBox/TopRow/NameLabel
 @onready var player_hp_bar: ProgressBar = $Root/PlayerInfo/VBox/HPBar
 @onready var player_hp_label: Label = $Root/PlayerInfo/VBox/HPLabel
 @onready var player_level_label: Label = $Root/PlayerInfo/VBox/TopRow/LevelLabel
+@onready var player_status_label: Label = $Root/PlayerInfo/VBox/StatusLabel
 
 # Enemy info
 @onready var enemy_name_label: Label = $Root/EnemyInfo/VBox/TopRow/NameLabel
 @onready var enemy_hp_bar: ProgressBar = $Root/EnemyInfo/VBox/HPBar
 @onready var enemy_hp_label: Label = $Root/EnemyInfo/VBox/HPLabel
 @onready var enemy_level_label: Label = $Root/EnemyInfo/VBox/TopRow/LevelLabel
+@onready var enemy_status_label: Label = $Root/EnemyInfo/VBox/StatusLabel
 
 # Sprites (now AnimatedSprite2D)
 @onready var player_sprite: AnimatedSprite2D = $Root/BattleField/PlayerSprite
@@ -39,10 +47,24 @@ var _enemy_sprite_pos := Vector2.ZERO
 
 func _ready() -> void:
 	fight_btn.pressed.connect(_on_fight_pressed)
-	catch_btn.pressed.connect(func(): catch_pressed.emit())
+	items_btn.pressed.connect(_on_items_pressed)
+	catch_btn.pressed.connect(_on_catch_pressed)
 	run_btn.pressed.connect(func(): run_pressed.emit())
 	skill_buttons.visible = false
 	floating_text.visible = false
+
+	# Create submenu containers
+	_item_menu = VBoxContainer.new()
+	_item_menu.name = "ItemMenu"
+	_item_menu.visible = false
+	_item_menu.custom_minimum_size = Vector2(140, 0)
+	$Root/BottomPanel/MarginContainer/HBox.add_child(_item_menu)
+
+	_catch_menu = VBoxContainer.new()
+	_catch_menu.name = "CatchMenu"
+	_catch_menu.visible = false
+	_catch_menu.custom_minimum_size = Vector2(140, 0)
+	$Root/BottomPanel/MarginContainer/HBox.add_child(_catch_menu)
 
 func setup(player_creature: CreatureInstance, enemy_creature: CreatureInstance) -> void:
 	player_name_label.text = player_creature.display_name()
@@ -60,8 +82,9 @@ func setup(player_creature: CreatureInstance, enemy_creature: CreatureInstance) 
 	_player_sprite_pos = player_sprite.position
 	_enemy_sprite_pos = enemy_sprite.position
 
-	catch_btn.text = "Catch (%d)" % GameManager.capture_items
+	_update_ball_count()
 	_build_skill_buttons(player_creature)
+	_update_status_labels(player_creature, enemy_creature)
 
 func _setup_battle_sprite(sprite: AnimatedSprite2D, data: CreatureData) -> void:
 	var tex: Texture2D = data.battle_texture if data.battle_texture else data.sprite_texture
@@ -144,11 +167,20 @@ func _build_skill_buttons(creature: CreatureInstance) -> void:
 	for child in skill_buttons.get_children():
 		child.queue_free()
 
-	for i in creature.data.skills.size():
-		var skill: SkillData = creature.data.skills[i] as SkillData
+	var skills := creature.active_skills if creature.active_skills.size() > 0 else creature.data.skills
+	for i in skills.size():
+		var skill: SkillData = skills[i] as SkillData
+		if not skill:
+			continue
 		var btn := Button.new()
 		btn.text = "%s (Pow:%d)" % [skill.skill_name, skill.power]
 		btn.custom_minimum_size = Vector2(0, 28)
+		# Color-code by category
+		match skill.category:
+			SkillData.Category.STATUS:
+				btn.add_theme_color_override("font_color", Color(0.6, 0.8, 1.0))
+			SkillData.Category.HEAL:
+				btn.add_theme_color_override("font_color", Color(0.4, 1.0, 0.4))
 		var idx := i
 		btn.pressed.connect(func(): _on_skill_selected(idx))
 		skill_buttons.add_child(btn)
@@ -166,7 +198,13 @@ func show_actions(visible_flag: bool) -> void:
 	action_buttons.visible = visible_flag
 	if visible_flag:
 		skill_buttons.visible = false
-		catch_btn.text = "Catch (%d)" % GameManager.capture_items
+		_item_menu.visible = false
+		_catch_menu.visible = false
+		_update_ball_count()
+
+func _update_ball_count() -> void:
+	var total_balls := InventoryManager.get_total_ball_count() if InventoryManager else 0
+	catch_btn.text = "Catch (%d)" % total_balls
 
 func update_player_hp(current: int, max_val: int) -> void:
 	_animate_hp_bar(player_hp_bar, current, max_val)
@@ -175,6 +213,24 @@ func update_player_hp(current: int, max_val: int) -> void:
 func update_enemy_hp(current: int, max_val: int) -> void:
 	_animate_hp_bar(enemy_hp_bar, current, max_val)
 	enemy_hp_label.text = "%d / %d" % [current, max_val]
+
+func update_status(player_creature: CreatureInstance, enemy_creature: CreatureInstance) -> void:
+	_update_status_labels(player_creature, enemy_creature)
+
+func _update_status_labels(player_creature: CreatureInstance, enemy_creature: CreatureInstance) -> void:
+	if player_creature and player_creature.status.is_active():
+		player_status_label.text = "[%s]" % player_creature.status.get_status_name()
+		player_status_label.visible = true
+	else:
+		player_status_label.text = ""
+		player_status_label.visible = false
+
+	if enemy_creature and enemy_creature.status.is_active():
+		enemy_status_label.text = "[%s]" % enemy_creature.status.get_status_name()
+		enemy_status_label.visible = true
+	else:
+		enemy_status_label.text = ""
+		enemy_status_label.visible = false
 
 func _animate_hp_bar(bar: ProgressBar, target: int, max_val: int) -> void:
 	bar.max_value = max_val
@@ -202,6 +258,76 @@ func _animate_hp_bar(bar: ProgressBar, target: int, max_val: int) -> void:
 func _on_fight_pressed() -> void:
 	action_buttons.visible = false
 	skill_buttons.visible = true
+
+func _on_items_pressed() -> void:
+	action_buttons.visible = false
+	_build_item_menu()
+	_item_menu.visible = true
+
+func _on_catch_pressed() -> void:
+	action_buttons.visible = false
+	_build_catch_menu()
+	_catch_menu.visible = true
+
+func _build_item_menu() -> void:
+	for child in _item_menu.get_children():
+		child.queue_free()
+
+	var usable := InventoryManager.get_usable_battle_items() if InventoryManager else []
+	if usable.is_empty():
+		var lbl := Label.new()
+		lbl.text = "No items!"
+		_item_menu.add_child(lbl)
+	else:
+		for entry in usable:
+			var btn := Button.new()
+			btn.text = "%s x%d" % [entry["name"], entry["count"]]
+			btn.custom_minimum_size = Vector2(0, 28)
+			var item_name: String = entry["name"]
+			btn.pressed.connect(func():
+				_item_menu.visible = false
+				item_pressed.emit(item_name)
+			)
+			_item_menu.add_child(btn)
+
+	var back := Button.new()
+	back.text = "Back"
+	back.custom_minimum_size = Vector2(0, 28)
+	back.pressed.connect(func():
+		_item_menu.visible = false
+		action_buttons.visible = true
+	)
+	_item_menu.add_child(back)
+
+func _build_catch_menu() -> void:
+	for child in _catch_menu.get_children():
+		child.queue_free()
+
+	var balls := InventoryManager.get_capture_balls() if InventoryManager else []
+	if balls.is_empty():
+		var lbl := Label.new()
+		lbl.text = "No balls!"
+		_catch_menu.add_child(lbl)
+	else:
+		for entry in balls:
+			var btn := Button.new()
+			btn.text = "%s x%d" % [entry["name"], entry["count"]]
+			btn.custom_minimum_size = Vector2(0, 28)
+			var ball_name: String = entry["name"]
+			btn.pressed.connect(func():
+				_catch_menu.visible = false
+				catch_pressed.emit(ball_name)
+			)
+			_catch_menu.add_child(btn)
+
+	var back := Button.new()
+	back.text = "Back"
+	back.custom_minimum_size = Vector2(0, 28)
+	back.pressed.connect(func():
+		_catch_menu.visible = false
+		action_buttons.visible = true
+	)
+	_catch_menu.add_child(back)
 
 func _on_skill_selected(index: int) -> void:
 	skill_buttons.visible = false

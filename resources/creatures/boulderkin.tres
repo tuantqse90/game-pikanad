@@ -23,3 +23,5 @@ battle_texture = ExtResource("5")
 overworld_texture = ExtResource("6")
 capture_rate = 0.35
 exp_yield = 38
+learn_set = [{"level": 1, "skill_path": "res://resources/skills/tackle.tres"}, {"level": 1, "skill_path": "res://resources/skills/rock_toss.tres"}, {"level": 7, "skill_path": "res://resources/skills/iron_wall.tres"}, {"level": 10, "skill_path": "res://resources/skills/sand_tomb.tres"}, {"level": 14, "skill_path": "res://resources/skills/boulder_crush.tres"}, {"level": 18, "skill_path": "res://resources/skills/tectonic_slam.tres"}, {"level": 24, "skill_path": "res://resources/skills/earthquake.tres"}]
+dex_number = 15

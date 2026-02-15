@@ -23,3 +23,5 @@ battle_texture = ExtResource("5")
 overworld_texture = ExtResource("6")
 capture_rate = 0.2
 exp_yield = 50
+learn_set = [{"level": 1, "skill_path": "res://resources/skills/tackle.tres"}, {"level": 1, "skill_path": "res://resources/skills/ember.tres"}, {"level": 7, "skill_path": "res://resources/skills/quick_attack.tres"}, {"level": 10, "skill_path": "res://resources/skills/fire_fang.tres"}, {"level": 14, "skill_path": "res://resources/skills/flame_burst.tres"}, {"level": 18, "skill_path": "res://resources/skills/flame_shield.tres"}, {"level": 22, "skill_path": "res://resources/skills/eruption.tres"}, {"level": 28, "skill_path": "res://resources/skills/inferno.tres"}]
+dex_number = 3

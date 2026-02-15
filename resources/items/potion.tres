@@ -9,3 +9,5 @@ item_type = 1
 description = "Restores 20 HP to one creature."
 price = 50
 effect_value = 20
+usable_in_battle = true
+usable_in_overworld = true

@@ -23,3 +23,5 @@ battle_texture = ExtResource("5")
 overworld_texture = ExtResource("6")
 capture_rate = 0.2
 exp_yield = 48
+learn_set = [{"level": 1, "skill_path": "res://resources/skills/tackle.tres"}, {"level": 1, "skill_path": "res://resources/skills/splash.tres"}, {"level": 7, "skill_path": "res://resources/skills/bubble_trap.tres"}, {"level": 10, "skill_path": "res://resources/skills/aqua_heal.tres"}, {"level": 14, "skill_path": "res://resources/skills/tidal_wave.tres"}, {"level": 18, "skill_path": "res://resources/skills/protect.tres"}, {"level": 22, "skill_path": "res://resources/skills/tsunami.tres"}, {"level": 28, "skill_path": "res://resources/skills/hydro_blast.tres"}]
+dex_number = 6

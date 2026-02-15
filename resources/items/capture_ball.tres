@@ -9,3 +9,5 @@ item_type = 0
 description = "A ball used to capture wild creatures."
 price = 100
 effect_value = 1
+catch_multiplier = 1.0
+usable_in_battle = true

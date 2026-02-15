@@ -23,3 +23,5 @@ battle_texture = ExtResource("5")
 overworld_texture = ExtResource("6")
 capture_rate = 0.45
 exp_yield = 28
+learn_set = [{"level": 1, "skill_path": "res://resources/skills/tackle.tres"}, {"level": 3, "skill_path": "res://resources/skills/vine_whip.tres"}, {"level": 8, "skill_path": "res://resources/skills/leech_seed.tres"}, {"level": 12, "skill_path": "res://resources/skills/quick_attack.tres"}, {"level": 16, "skill_path": "res://resources/skills/razor_leaf.tres"}, {"level": 20, "skill_path": "res://resources/skills/drain_life.tres"}]
+dex_number = 10

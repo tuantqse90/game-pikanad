@@ -9,3 +9,5 @@ item_type = 0
 description = "A better ball with higher catch rate."
 price = 300
 effect_value = 2
+catch_multiplier = 1.5
+usable_in_battle = true
