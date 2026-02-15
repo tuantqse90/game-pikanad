@@ -13,6 +13,7 @@ var _dex_screen: Node
 
 func _ready() -> void:
 	GameManager.change_state(GameManager.GameState.MENU)
+	AudioManager.play_track(AudioManager.MusicTrack.MENU)
 	start_btn.pressed.connect(_on_start)
 	continue_btn.pressed.connect(_on_continue)
 	dex_btn.pressed.connect(_on_dex)

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TrainerData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/trainer_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trainer_name = "Marina"
+ai_level = 1
+party = [{"species_path": "res://resources/creatures/aquafin.tres", "level": 18}, {"species_path": "res://resources/creatures/tidecrab.tres", "level": 19}, {"species_path": "res://resources/creatures/zephyrix.tres", "level": 18}]
+pre_battle_lines = ["The tides are calling!", "I'm Marina — prepare to be swept away!"]
+win_lines = ["You've conquered the waves!", "The Tide Badge is yours!"]
+lose_lines = ["The ocean is unforgiving!", "Train more and try again!"]
+badge_number = 3
+reward_gold = 700
+reward_items = [{"item_name": "Hyper Potion", "count": 2}]
+rematch_allowed = false

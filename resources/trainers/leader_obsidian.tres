@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TrainerData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/trainer_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trainer_name = "Obsidian"
+ai_level = 2
+party = [{"species_path": "res://resources/creatures/pyrodrake.tres", "level": 35}, {"species_path": "res://resources/creatures/boulderkin.tres", "level": 35}, {"species_path": "res://resources/creatures/blazefox.tres", "level": 36}]
+pre_battle_lines = ["The lava core forges the strongest!", "I am Obsidian — prepare for the heat!"]
+win_lines = ["You've survived the inferno!", "The Obsidian Badge proves your strength!"]
+lose_lines = ["The magma consumes all!", "Only the strongest survive the core!"]
+badge_number = 7
+reward_gold = 1500
+reward_items = [{"item_name": "Hyper Potion", "count": 5}]
+rematch_allowed = false

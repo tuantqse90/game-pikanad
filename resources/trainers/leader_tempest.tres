@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TrainerData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/trainer_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trainer_name = "Tempest"
+ai_level = 2
+party = [{"species_path": "res://resources/creatures/breezeling.tres", "level": 30}, {"species_path": "res://resources/creatures/zephyrix.tres", "level": 31}, {"species_path": "res://resources/creatures/stormraptor.tres", "level": 32}]
+pre_battle_lines = ["The skies belong to me!", "I'm Tempest — can you weather the storm?"]
+win_lines = ["You've calmed the storm!", "The Tempest Badge is yours — soar high!"]
+lose_lines = ["The winds are too fierce for you!", "Come back when you can fly!"]
+badge_number = 6
+reward_gold = 1300
+reward_items = [{"item_name": "Ultra Ball", "count": 3}, {"item_name": "Hyper Potion", "count": 3}]
+rematch_allowed = false

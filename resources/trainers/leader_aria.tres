@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TrainerData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/trainer_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trainer_name = "Aria"
+ai_level = 2
+party = [{"species_path": "res://resources/creatures/tsunariel.tres", "level": 40}, {"species_path": "res://resources/creatures/stormraptor.tres", "level": 40}, {"species_path": "res://resources/creatures/elderoak.tres", "level": 42}, {"species_path": "res://resources/creatures/pyrodrake.tres", "level": 45}]
+pre_battle_lines = ["So you've gathered all seven badges...", "I am Aria, the Champion. This is your final test!"]
+win_lines = ["Incredible! You are the new Champion!", "The Champion Badge marks your place in history!"]
+lose_lines = ["The Champion stands undefeated!", "Gather your strength and challenge me again!"]
+badge_number = 8
+reward_gold = 3000
+reward_items = [{"item_name": "Master Ball", "count": 1}]
+rematch_allowed = false

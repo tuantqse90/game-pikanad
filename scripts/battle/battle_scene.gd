@@ -29,11 +29,30 @@ func _ready() -> void:
 	battle_manager.evolution_ready.connect(_on_evolution_ready)
 	battle_manager.skill_learned.connect(_on_skill_learned)
 
+	# Connect trainer signals
+	battle_manager.trainer_defeated.connect(_on_trainer_defeated)
+	battle_manager.trainer_creature_switched.connect(_on_trainer_creature_switched)
+
+	# Connect speed toggle
+	battle_manager.speed_changed.connect(_on_speed_changed)
+
+	# Set zone-specific background color
+	_apply_zone_background()
+
 	# Connect HUD -> manager
 	hud.fight_pressed.connect(battle_manager.player_fight)
 	hud.catch_pressed.connect(battle_manager.player_catch)
 	hud.run_pressed.connect(battle_manager.player_run)
 	hud.item_pressed.connect(battle_manager.player_use_item)
+
+	# Play battle music
+	if battle_manager.is_trainer_battle and battle_manager.trainer_data:
+		if battle_manager.trainer_data.trainer_name == "Champion":
+			AudioManager.play_track(AudioManager.MusicTrack.CHAMPION)
+		else:
+			AudioManager.play_track(AudioManager.MusicTrack.TRAINER_BATTLE)
+	else:
+		AudioManager.play_track(AudioManager.MusicTrack.BATTLE)
 
 	# Start the battle
 	battle_manager.start_battle()
@@ -42,6 +61,10 @@ func _ready() -> void:
 	await get_tree().process_frame
 	if battle_manager.player_creature and battle_manager.enemy_creature:
 		hud.setup(battle_manager.player_creature, battle_manager.enemy_creature)
+		# Setup trainer HUD mode
+		if battle_manager.is_trainer_battle and battle_manager.trainer_data:
+			var party_size := battle_manager.trainer_data.party.size()
+			hud.setup_trainer(battle_manager.trainer_data.trainer_name, party_size)
 
 func _on_state_changed(new_state: int) -> void:
 	# Show action buttons only during PLAYER_TURN
@@ -63,9 +86,34 @@ func _on_effectiveness_text(text: String, effectiveness: float) -> void:
 	var color := Color.WHITE
 	if effectiveness > 1.2:
 		color = Color(1.0, 0.3, 0.1)  # Red-orange for super effective
+		hud.flash_screen(Color(1.0, 0.5, 0.1), 0.2)
+		hud.show_damage_number(0, hud.enemy_sprite.position, true, false)
 	elif effectiveness < 0.8:
 		color = Color(0.5, 0.5, 0.7)  # Muted blue for not very effective
 	hud.show_floating_text(text, color)
+
+func _on_speed_changed(speed: float) -> void:
+	hud.set_speed_indicator(speed > 1.0)
+
+func _apply_zone_background() -> void:
+	var bg: ColorRect = $Background if has_node("Background") else null
+	if not bg:
+		return
+	var zone_name := ""
+	if GameManager.has_meta("battle_zone"):
+		zone_name = GameManager.get_meta("battle_zone")
+	var zone_colors := {
+		"Starter Meadow": Color(0.25, 0.55, 0.2),
+		"Fire Volcano": Color(0.45, 0.15, 0.1),
+		"Lava Core": Color(0.5, 0.12, 0.08),
+		"Water Coast": Color(0.15, 0.3, 0.55),
+		"Forest Grove": Color(0.12, 0.35, 0.12),
+		"Earth Caves": Color(0.35, 0.25, 0.15),
+		"Sky Peaks": Color(0.5, 0.65, 0.85),
+		"Champion Arena": Color(0.3, 0.15, 0.45),
+	}
+	if zone_colors.has(zone_name):
+		bg.color = zone_colors[zone_name]
 
 func _on_status_changed(_target_name: String, _status_name: String) -> void:
 	if battle_manager.player_creature and battle_manager.enemy_creature:
@@ -108,7 +156,21 @@ func _on_skill_dialog_closed() -> void:
 	if battle_manager.player_creature:
 		hud._build_skill_buttons(battle_manager.player_creature)
 
+func _on_trainer_defeated(_trainer: TrainerData) -> void:
+	# Auto-save after trainer victory
+	if SaveManager:
+		SaveManager.save_game()
+
+func _on_trainer_creature_switched(new_creature: CreatureInstance, remaining: int) -> void:
+	# Update HUD for new enemy creature
+	if battle_manager.player_creature:
+		hud.setup(battle_manager.player_creature, new_creature)
+		if battle_manager.is_trainer_battle and battle_manager.trainer_data:
+			hud.setup_trainer(battle_manager.trainer_data.trainer_name, remaining)
+
 func _on_battle_ended(result: String) -> void:
+	if result == "win" or result == "capture":
+		AudioManager.play_track(AudioManager.MusicTrack.VICTORY)
 	match result:
 		"lose":
 			# Heal party and return to menu on loss

@@ -45,6 +45,16 @@ var _catch_menu: VBoxContainer
 var _player_sprite_pos := Vector2.ZERO
 var _enemy_sprite_pos := Vector2.ZERO
 
+# Trainer battle state
+var _is_trainer_mode := false
+var _trainer_party_label: Label
+
+# Speed toggle indicator
+var _speed_label: Label
+
+# Screen flash overlay
+var _flash_rect: ColorRect
+
 func _ready() -> void:
 	fight_btn.pressed.connect(_on_fight_pressed)
 	items_btn.pressed.connect(_on_items_pressed)
@@ -66,6 +76,33 @@ func _ready() -> void:
 	_catch_menu.custom_minimum_size = Vector2(140, 0)
 	$Root/BottomPanel/MarginContainer/HBox.add_child(_catch_menu)
 
+	# Create trainer party count label (hidden by default)
+	_trainer_party_label = Label.new()
+	_trainer_party_label.name = "TrainerPartyLabel"
+	_trainer_party_label.visible = false
+	_trainer_party_label.add_theme_font_size_override("font_size", 10)
+	$Root/EnemyInfo/VBox.add_child(_trainer_party_label)
+
+	# Speed toggle indicator
+	_speed_label = Label.new()
+	_speed_label.name = "SpeedLabel"
+	_speed_label.text = "2x [B]"
+	_speed_label.visible = false
+	_speed_label.add_theme_font_size_override("font_size", 12)
+	_speed_label.add_theme_color_override("font_color", Color(1.0, 1.0, 0.3))
+	_speed_label.position = Vector2(580, 4)
+	$Root.add_child(_speed_label)
+
+	# Screen flash overlay
+	_flash_rect = ColorRect.new()
+	_flash_rect.name = "FlashRect"
+	_flash_rect.color = Color(1, 1, 1, 0)
+	_flash_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_flash_rect.anchors_preset = Control.PRESET_FULL_RECT
+	_flash_rect.anchor_right = 1.0
+	_flash_rect.anchor_bottom = 1.0
+	$Root.add_child(_flash_rect)
+
 func setup(player_creature: CreatureInstance, enemy_creature: CreatureInstance) -> void:
 	player_name_label.text = player_creature.display_name()
 	player_level_label.text = "Lv.%d" % player_creature.level
@@ -82,9 +119,24 @@ func setup(player_creature: CreatureInstance, enemy_creature: CreatureInstance) 
 	_player_sprite_pos = player_sprite.position
 	_enemy_sprite_pos = enemy_sprite.position
 
-	_update_ball_count()
+	# Entry slide-in animation
+	_animate_entry()
+
+	if not _is_trainer_mode:
+		_update_ball_count()
 	_build_skill_buttons(player_creature)
 	_update_status_labels(player_creature, enemy_creature)
+
+func setup_trainer(trainer_name: String, party_count: int) -> void:
+	_is_trainer_mode = true
+	# Show trainer name prefix
+	enemy_name_label.text = "Leader %s's %s" % [trainer_name, enemy_name_label.text]
+	# Hide Catch and Run buttons
+	catch_btn.visible = false
+	run_btn.visible = false
+	# Show party count
+	_trainer_party_label.text = "Party: %d remaining" % party_count
+	_trainer_party_label.visible = true
 
 func _setup_battle_sprite(sprite: AnimatedSprite2D, data: CreatureData) -> void:
 	var tex: Texture2D = data.battle_texture if data.battle_texture else data.sprite_texture
@@ -200,7 +252,8 @@ func show_actions(visible_flag: bool) -> void:
 		skill_buttons.visible = false
 		_item_menu.visible = false
 		_catch_menu.visible = false
-		_update_ball_count()
+		if not _is_trainer_mode:
+			_update_ball_count()
 
 func _update_ball_count() -> void:
 	var total_balls := InventoryManager.get_total_ball_count() if InventoryManager else 0
@@ -254,6 +307,41 @@ func _animate_hp_bar(bar: ProgressBar, target: int, max_val: int) -> void:
 	style.corner_radius_bottom_left = 2
 	style.corner_radius_bottom_right = 2
 	bar.add_theme_stylebox_override("fill", style)
+
+func _animate_entry() -> void:
+	# Slide sprites in from off-screen
+	var player_start := Vector2(_player_sprite_pos.x - 200, _player_sprite_pos.y)
+	var enemy_start := Vector2(_enemy_sprite_pos.x + 200, _enemy_sprite_pos.y)
+	player_sprite.position = player_start
+	enemy_sprite.position = enemy_start
+	var tween := create_tween()
+	tween.tween_property(enemy_sprite, "position", _enemy_sprite_pos, 0.5).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	tween.tween_property(player_sprite, "position", _player_sprite_pos, 0.5).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+
+func show_damage_number(amount: int, target_pos: Vector2, is_super: bool = false, is_weak: bool = false) -> void:
+	var dmg_label := Label.new()
+	dmg_label.text = str(amount)
+	dmg_label.add_theme_font_size_override("font_size", 16 if is_super else (10 if is_weak else 13))
+	if is_super:
+		dmg_label.add_theme_color_override("font_color", Color(1.0, 0.2, 0.1))
+	elif is_weak:
+		dmg_label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+	else:
+		dmg_label.add_theme_color_override("font_color", Color.WHITE)
+	dmg_label.position = target_pos + Vector2(-10, -20)
+	$Root.add_child(dmg_label)
+	var tween := create_tween()
+	tween.tween_property(dmg_label, "position:y", dmg_label.position.y - 30, 0.6)
+	tween.parallel().tween_property(dmg_label, "modulate:a", 0.0, 0.6)
+	tween.tween_callback(func(): dmg_label.queue_free())
+
+func flash_screen(color: Color = Color.WHITE, duration: float = 0.15) -> void:
+	_flash_rect.color = Color(color.r, color.g, color.b, 0.6)
+	var tween := create_tween()
+	tween.tween_property(_flash_rect, "color:a", 0.0, duration)
+
+func set_speed_indicator(fast: bool) -> void:
+	_speed_label.visible = fast
 
 func _on_fight_pressed() -> void:
 	action_buttons.visible = false

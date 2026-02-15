@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TrainerData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/trainer_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trainer_name = "Blaze"
+ai_level = 1
+party = [{"species_path": "res://resources/creatures/flamepup.tres", "level": 14}, {"species_path": "res://resources/creatures/blazefox.tres", "level": 15}, {"species_path": "res://resources/creatures/stoneling.tres", "level": 14}]
+pre_battle_lines = ["The flames of battle burn bright!", "I am Blaze, master of the volcano!"]
+win_lines = ["Your fire burns stronger than mine!", "Take the Blaze Badge — you've earned it!"]
+lose_lines = ["The volcano's heat was too much for you!", "Come back when you're stronger!"]
+badge_number = 2
+reward_gold = 500
+reward_items = [{"item_name": "Super Potion", "count": 3}]
+rematch_allowed = false

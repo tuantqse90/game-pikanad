@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TrainerData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/trainer_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trainer_name = "Oakhart"
+ai_level = 1
+party = [{"species_path": "res://resources/creatures/floravine.tres", "level": 22}, {"species_path": "res://resources/creatures/vinewhisker.tres", "level": 23}, {"species_path": "res://resources/creatures/elderoak.tres", "level": 24}]
+pre_battle_lines = ["The forest protects its own.", "I am Oakhart, guardian of the grove!"]
+win_lines = ["You have the heart of the forest!", "The Grove Badge belongs to you now."]
+lose_lines = ["The ancient roots hold firm.", "Return when you've grown stronger."]
+badge_number = 4
+reward_gold = 900
+reward_items = [{"item_name": "Revive", "count": 2}]
+rematch_allowed = false

@@ -4,7 +4,7 @@ extends Node
 ## IndexedDB on web (persistent across sessions).
 
 const SAVE_PATH := "user://save_data.json"
-const SAVE_VERSION := 2
+const SAVE_VERSION := 3
 
 func save_game() -> void:
 	var save_data := {
@@ -13,6 +13,7 @@ func save_game() -> void:
 		"items": InventoryManager.items.duplicate(),
 		"party": _serialize_party(),
 		"dex": DexManager.serialize(),
+		"badges": BadgeManager.serialize(),
 	}
 
 	var json_str := JSON.stringify(save_data)
@@ -51,6 +52,10 @@ func load_game() -> bool:
 	# Restore dex
 	if data.has("dex") and DexManager:
 		DexManager.deserialize(data["dex"])
+
+	# Restore badges
+	if data.has("badges") and BadgeManager:
+		BadgeManager.deserialize(data["badges"])
 
 	return true
 
@@ -130,6 +135,15 @@ func _migrate_save(data: Dictionary, from_version: int) -> Dictionary:
 					dex_data[str(species.species_id)] = DexManager.DexStatus.CAUGHT
 		data["dex"] = dex_data
 		data["save_version"] = 2
+
+	if from_version < 3:
+		# v2 -> v3: Add empty badges and defeated_trainers
+		data["badges"] = {
+			"badges": [false, false, false, false, false, false, false, false],
+			"defeated_trainers": {},
+		}
+		data["save_version"] = 3
+
 	return data
 
 func has_save() -> bool:

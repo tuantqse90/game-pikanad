@@ -92,11 +92,20 @@ func heal(amount: int) -> void:
 func exp_to_next_level() -> int:
 	return level * 25
 
+## Get the current level cap based on badge progress.
+func _get_level_cap() -> int:
+	if BadgeManager and BadgeManager.has_badge(5):
+		return 50
+	return 30
+
 ## Gain EXP. Returns true if leveled up.
 func gain_exp(amount: int) -> bool:
+	var cap := _get_level_cap()
+	if level >= cap:
+		return false
 	exp += amount
 	var leveled_up := false
-	while exp >= exp_to_next_level():
+	while exp >= exp_to_next_level() and level < cap:
 		exp -= exp_to_next_level()
 		var old_max := max_hp()  # Capture BEFORE level up
 		level += 1

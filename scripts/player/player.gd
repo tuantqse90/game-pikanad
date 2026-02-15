@@ -1,6 +1,7 @@
 extends CharacterBody2D
 
 const SPEED := 120.0
+const RUN_SPEED := 180.0
 
 @onready var anim_sprite: AnimatedSprite2D = $AnimatedSprite2D
 
@@ -17,7 +18,8 @@ func _physics_process(_delta: float) -> void:
 
 	if input != Vector2.ZERO:
 		input = input.normalized()
-		velocity = input * SPEED
+		var current_speed := RUN_SPEED if Input.is_action_pressed("run") else SPEED
+		velocity = input * current_speed
 		# Determine facing direction
 		if abs(input.x) > abs(input.y):
 			facing = "right" if input.x > 0 else "left"

@@ -1,5 +1,7 @@
 extends "res://scripts/world/zone_base.gd"
 
+const NPC_SCENE := preload("res://scenes/npc/npc_base.tscn")
+
 func _init() -> void:
 	bg_color = Color(0.12, 0.3, 0.12)
 	zone_name = "Forest Grove"
@@ -22,3 +24,17 @@ func _get_portals() -> Array[Dictionary]:
 		"spawn_offset": Vector2(-280, 0),
 		"label": "Starter Meadow >>"
 	}]
+
+func _ready() -> void:
+	super._ready()
+	_create_leader_npc()
+
+func _create_leader_npc() -> void:
+	var leader: Area2D = NPC_SCENE.instantiate()
+	leader.npc_name = "Leader Oakhart"
+	leader.npc_type = leader.NPCType.TRAINER
+	leader.npc_color = Color(0.4, 0.6, 0.2)
+	leader.trainer_data_path = "res://resources/trainers/leader_oakhart.tres"
+	leader.trainer_id = "oakhart"
+	leader.position = Vector2(-100, 0)
+	add_child(leader)

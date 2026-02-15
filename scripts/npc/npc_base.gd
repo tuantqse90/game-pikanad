@@ -1,8 +1,8 @@
 extends Area2D
 
-## Base NPC class. NPCs can talk, heal, or sell items.
+## Base NPC class. NPCs can talk, heal, sell items, or challenge as trainers.
 
-enum NPCType { TALKER, HEALER, SHOPKEEPER }
+enum NPCType { TALKER, HEALER, SHOPKEEPER, TRAINER }
 
 @export var npc_name: String = "NPC"
 @export var npc_type: NPCType = NPCType.TALKER
@@ -11,6 +11,10 @@ enum NPCType { TALKER, HEALER, SHOPKEEPER }
 
 # Shop items (only used by SHOPKEEPER type)
 @export var shop_items: Array[Resource] = []  # Array of ItemData
+
+# Trainer fields (only used by TRAINER type)
+@export var trainer_data_path: String = ""
+@export var trainer_id: String = ""
 
 var _interactable := false
 var _label: Label
@@ -39,6 +43,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			interact()
 
 func interact() -> void:
+	AudioManager.play_sound(AudioManager.SFX.NPC_INTERACT)
 	match npc_type:
 		NPCType.TALKER:
 			_show_dialogue()
@@ -46,6 +51,8 @@ func interact() -> void:
 			_heal_party()
 		NPCType.SHOPKEEPER:
 			_open_shop()
+		NPCType.TRAINER:
+			_challenge_trainer()
 
 func _show_dialogue() -> void:
 	GameManager.change_state(GameManager.GameState.PAUSED)
@@ -80,6 +87,39 @@ func _open_shop() -> void:
 				["Welcome to my shop!", "Sorry, shop is under construction."],
 				func(): GameManager.change_state(GameManager.GameState.OVERWORLD)
 			)
+
+func _challenge_trainer() -> void:
+	if trainer_data_path == "":
+		_show_dialogue()
+		return
+
+	# Check if already defeated
+	var tid := trainer_id if trainer_id != "" else npc_name.to_lower().replace(" ", "_")
+	if BadgeManager and BadgeManager.is_defeated(tid):
+		GameManager.change_state(GameManager.GameState.PAUSED)
+		var dialogue_box = _get_dialogue_box()
+		if dialogue_box:
+			dialogue_box.show_dialogue(
+				["You've already beaten me!", "Keep pushing forward!"],
+				func(): GameManager.change_state(GameManager.GameState.OVERWORLD)
+			)
+		return
+
+	# Load trainer data
+	var t_data: TrainerData = load(trainer_data_path) as TrainerData
+	if not t_data:
+		_show_dialogue()
+		return
+
+	# Show pre-battle dialogue then start battle
+	GameManager.change_state(GameManager.GameState.PAUSED)
+	var dialogue_box = _get_dialogue_box()
+	if dialogue_box and t_data.pre_battle_lines.size() > 0:
+		dialogue_box.show_dialogue(t_data.pre_battle_lines, func():
+			SceneManager.go_to_trainer_battle(t_data)
+		)
+	else:
+		SceneManager.go_to_trainer_battle(t_data)
 
 func _get_dialogue_box():
 	return get_tree().get_first_node_in_group("dialogue_box")

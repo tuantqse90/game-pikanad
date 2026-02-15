@@ -34,9 +34,12 @@ func _setup_transition_overlay() -> void:
 	_transition_layer.add_child(_fade_rect)
 
 func go_to_overworld() -> void:
+	if SaveManager:
+		SaveManager.save_game()
 	await _fade_transition(func():
 		GameManager.change_state(GameManager.GameState.OVERWORLD)
 		get_tree().change_scene_to_file(OVERWORLD_SCENE)
+		AudioManager.play_track(AudioManager.MusicTrack.OVERWORLD)
 		scene_changed.emit("overworld")
 	)
 
@@ -50,11 +53,23 @@ func go_to_battle(wild_creature_data: CreatureData, wild_level: int) -> void:
 		scene_changed.emit("battle")
 	)
 
+func go_to_trainer_battle(p_trainer_data: TrainerData) -> void:
+	GameManager.set_meta("is_trainer_battle", true)
+	GameManager.set_meta("trainer_data", p_trainer_data)
+	await _fade_transition(func():
+		GameManager.change_state(GameManager.GameState.BATTLE)
+		get_tree().change_scene_to_file(BATTLE_SCENE)
+		scene_changed.emit("trainer_battle")
+	)
+
 func go_to_zone(zone_path: String) -> void:
 	current_zone_path = zone_path
+	if SaveManager:
+		SaveManager.save_game()
 	await _fade_transition(func():
 		GameManager.change_state(GameManager.GameState.OVERWORLD)
 		get_tree().change_scene_to_file(zone_path)
+		AudioManager.play_track(AudioManager.MusicTrack.OVERWORLD)
 		scene_changed.emit("zone")
 	)
 
@@ -76,6 +91,7 @@ func go_to_main_menu() -> void:
 	await _fade_transition(func():
 		GameManager.change_state(GameManager.GameState.MENU)
 		get_tree().change_scene_to_file(MAIN_MENU_SCENE)
+		AudioManager.play_track(AudioManager.MusicTrack.MENU)
 		scene_changed.emit("main_menu")
 	)
 

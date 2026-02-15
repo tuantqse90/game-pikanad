@@ -13,6 +13,8 @@ var species_list: Array[CreatureData] = []
 # Zone-specific creature pools
 var meadow_species: Array[CreatureData] = []
 
+var _canvas_modulate: CanvasModulate
+
 @onready var player: CharacterBody2D = $Player
 
 const MAP_W := 20  # tiles
@@ -20,6 +22,7 @@ const MAP_H := 15
 
 func _ready() -> void:
 	GameManager.change_state(GameManager.GameState.OVERWORLD)
+	GameManager.set_meta("battle_zone", "Starter Meadow")
 
 	# Load species data
 	species_list = [
@@ -59,6 +62,15 @@ func _ready() -> void:
 
 	# Spawn NPCs
 	_create_npcs()
+
+	# Day/night cycle
+	_setup_day_night()
+
+	# Minimap
+	_setup_minimap()
+
+	# Weather (meadow = clear)
+	GameManager.set_meta("zone_weather", WeatherSystem.WeatherType.CLEAR)
 
 func _build_terrain() -> void:
 	# Create a simple colored background based on zone biome
@@ -113,6 +125,14 @@ func _create_portals() -> void:
 		"^^ Earth Caves"
 	)
 
+	# Portal to Champion Arena (top-right)
+	_add_portal(
+		Vector2(250, -180),
+		"res://scenes/world/zones/champion_arena.tscn",
+		Vector2(0, 200),
+		"Champion Arena"
+	)
+
 func _create_npcs() -> void:
 	# Healer NPC
 	var healer: Area2D = NPC_SCENE.instantiate()
@@ -129,11 +149,17 @@ func _create_npcs() -> void:
 	shopkeeper.npc_type = shopkeeper.NPCType.SHOPKEEPER
 	shopkeeper.npc_color = Color(0.3, 0.6, 0.9)
 	shopkeeper.dialogue_lines = ["Welcome to my shop!"]
-	shopkeeper.shop_items = [
+	var shop_list: Array[Resource] = [
 		load("res://resources/items/capture_ball.tres"),
 		load("res://resources/items/potion.tres"),
-		load("res://resources/items/super_ball.tres"),
 	]
+	# Badge 2: Super Ball available
+	if BadgeManager and BadgeManager.has_badge(2):
+		shop_list.append(load("res://resources/items/super_ball.tres"))
+	# Badge 6: Ultra Ball available
+	if BadgeManager and BadgeManager.has_badge(6):
+		shop_list.append(load("res://resources/items/ultra_ball.tres"))
+	shopkeeper.shop_items = shop_list
 	shopkeeper.position = Vector2(80, -80)
 	add_child(shopkeeper)
 
@@ -145,11 +171,21 @@ func _create_npcs() -> void:
 	talker.dialogue_lines = [
 		"Welcome to Game Pikanad!",
 		"Explore different zones to find rare creatures.",
-		"Defeat wild creatures to earn gold and EXP!",
-		"Visit the shop to buy Capture Balls.",
+		"Defeat zone leaders to earn badges!",
+		"Collect all 8 badges to challenge the Champion!",
 	]
 	talker.position = Vector2(0, -120)
 	add_child(talker)
+
+	# Leader Kai (Badge 1)
+	var kai: Area2D = NPC_SCENE.instantiate()
+	kai.npc_name = "Leader Kai"
+	kai.npc_type = kai.NPCType.TRAINER
+	kai.npc_color = Color(0.3, 0.8, 0.3)
+	kai.trainer_data_path = "res://resources/trainers/leader_kai.tres"
+	kai.trainer_id = "kai"
+	kai.position = Vector2(-150, 80)
+	add_child(kai)
 
 func _add_portal(pos: Vector2, target: String, spawn_offset: Vector2, label: String) -> void:
 	var portal: Area2D = ZONE_PORTAL_SCENE.instantiate()
@@ -158,3 +194,22 @@ func _add_portal(pos: Vector2, target: String, spawn_offset: Vector2, label: Str
 	portal.spawn_offset = spawn_offset
 	portal.portal_label = label
 	add_child(portal)
+
+func _setup_minimap() -> void:
+	var minimap_layer := CanvasLayer.new()
+	minimap_layer.layer = 90
+	add_child(minimap_layer)
+	var minimap := preload("res://scripts/ui/minimap.gd").new()
+	minimap.setup(self)
+	minimap_layer.add_child(minimap)
+
+func _setup_day_night() -> void:
+	_canvas_modulate = CanvasModulate.new()
+	_canvas_modulate.color = TimeManager.get_tint_color()
+	add_child(_canvas_modulate)
+	TimeManager.phase_changed.connect(_on_time_phase_changed)
+
+func _on_time_phase_changed(_new_phase: int) -> void:
+	if _canvas_modulate:
+		var tween := create_tween()
+		tween.tween_property(_canvas_modulate, "color", TimeManager.get_tint_color(), 2.0)

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TrainerData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/trainer_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trainer_name = "Kai"
+ai_level = 1
+party = [{"species_path": "res://resources/creatures/thornsprout.tres", "level": 8}, {"species_path": "res://resources/creatures/breezeling.tres", "level": 9}, {"species_path": "res://resources/creatures/vinewhisker.tres", "level": 10}]
+pre_battle_lines = ["I'm Kai, the Meadow Leader!", "Let's see if your creatures can handle mine!"]
+win_lines = ["Well done! You've earned the Sprout Badge!", "Keep exploring — there's much more ahead!"]
+lose_lines = ["Better luck next time!", "Train harder and come back when you're ready!"]
+badge_number = 1
+reward_gold = 300
+reward_items = [{"item_name": "Super Ball", "count": 3}]
+rematch_allowed = false

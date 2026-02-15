@@ -41,6 +41,17 @@ func _refresh_list() -> void:
 		creature_list.add_child(empty_label)
 		return
 
+	# Quick Heal button — only show if party is damaged and has healing items
+	if _has_damaged_creatures() and _has_healing_items():
+		var heal_btn := Button.new()
+		heal_btn.text = "Heal All"
+		heal_btn.custom_minimum_size = Vector2(0, 30)
+		heal_btn.add_theme_color_override("font_color", Color(0.3, 1.0, 0.3))
+		heal_btn.pressed.connect(_on_heal_all)
+		creature_list.add_child(heal_btn)
+		var sep := HSeparator.new()
+		creature_list.add_child(sep)
+
 	for creature in PartyManager.party:
 		var entry := _create_entry(creature)
 		creature_list.add_child(entry)
@@ -166,3 +177,69 @@ func _equip_item(creature: CreatureInstance, item_name: String) -> void:
 				InventoryManager.add_item(creature.held_item.item_name)
 			creature.held_item = data
 	_refresh_list()
+
+func _has_damaged_creatures() -> bool:
+	for creature in PartyManager.party:
+		if creature.current_hp < creature.max_hp() or creature.is_fainted():
+			return true
+	return false
+
+func _has_healing_items() -> bool:
+	if not InventoryManager:
+		return false
+	# Check for potions and revives
+	for item_name in InventoryManager.items:
+		if InventoryManager.items[item_name] <= 0:
+			continue
+		var data := InventoryManager.get_item_data(item_name)
+		if data and (data.item_type == ItemData.ItemType.POTION or data.item_type == ItemData.ItemType.REVIVE):
+			return true
+	return false
+
+func _on_heal_all() -> void:
+	var potions_used := 0
+	var revives_used := 0
+
+	for creature in PartyManager.party:
+		# Revive fainted creatures first
+		if creature.is_fainted():
+			if InventoryManager.remove_item("Revive"):
+				creature.current_hp = max(1, int(creature.max_hp() * 0.5))
+				revives_used += 1
+
+		# Heal damaged creatures with best available potion
+		while creature.current_hp < creature.max_hp() and not creature.is_fainted():
+			var healed := false
+			for potion_name in ["Max Potion", "Super Potion", "Potion"]:
+				var data := InventoryManager.get_item_data(potion_name)
+				if data and InventoryManager.remove_item(potion_name):
+					var heal_amount := data.effect_value
+					if heal_amount >= 999:
+						heal_amount = creature.max_hp()
+					creature.heal(heal_amount)
+					potions_used += 1
+					healed = true
+					break
+			if not healed:
+				break
+
+	AudioManager.play_sound(AudioManager.SFX.USE_POTION)
+	# Show summary then refresh
+	for child in creature_list.get_children():
+		child.queue_free()
+	var summary := Label.new()
+	var parts: Array[String] = []
+	if potions_used > 0:
+		parts.append("Used %d Potion(s)" % potions_used)
+	if revives_used > 0:
+		parts.append("Used %d Revive(s)" % revives_used)
+	if parts.is_empty():
+		summary.text = "No healing needed!"
+	else:
+		summary.text = "%s. All creatures healed!" % ". ".join(parts)
+	creature_list.add_child(summary)
+
+	# Auto-refresh after a moment
+	await get_tree().create_timer(1.5).timeout
+	if _is_open:
+		_refresh_list()

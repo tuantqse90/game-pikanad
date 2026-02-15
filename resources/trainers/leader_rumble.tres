@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TrainerData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://resources/trainer_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+trainer_name = "Rumble"
+ai_level = 2
+party = [{"species_path": "res://resources/creatures/stoneling.tres", "level": 26}, {"species_path": "res://resources/creatures/boulderkin.tres", "level": 27}, {"species_path": "res://resources/creatures/flamepup.tres", "level": 26}]
+pre_battle_lines = ["The earth trembles beneath my feet!", "I'm Rumble — brace yourself!"]
+win_lines = ["You shook the very ground!", "Take the Rumble Badge — you've earned my respect!"]
+lose_lines = ["The earth stands firm!", "You'll need more power to topple these boulders!"]
+badge_number = 5
+reward_gold = 1100
+reward_items = [{"item_name": "Ultra Ball", "count": 3}]
+rematch_allowed = false

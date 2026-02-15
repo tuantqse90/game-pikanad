@@ -23,6 +23,8 @@ Web3Manager="*res://autoloads/web3_manager.gd"
 SaveManager="*res://autoloads/save_manager.gd"
 NetworkManager="*res://autoloads/network_manager.gd"
 DexManager="*res://autoloads/dex_manager.gd"
+BadgeManager="*res://autoloads/badge_manager.gd"
+TimeManager="*res://autoloads/time_manager.gd"
 
 [display]
 
