@@ -24,6 +24,7 @@ enum Rarity { COMMON, UNCOMMON, RARE, LEGENDARY }
 # Evolution
 @export var evolution_level: int = 0  # 0 = does not evolve
 @export var evolves_into: CreatureData  # Species to evolve into
+@export var trade_evolution: bool = false  # true = evolves only via trade, not level-up
 
 # Learn set: skills learned at specific levels [{level: int, skill_path: String}]
 @export var learn_set: Array[Dictionary] = []

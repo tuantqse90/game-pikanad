@@ -12,6 +12,11 @@ signal turn_result(data: Dictionary)
 signal turn_changed(your_turn: bool)
 signal battle_ended(data: Dictionary)
 signal error(message: String)
+signal trade_request_received(from_id: String, creature_data: Dictionary)
+signal trade_offer_received(creature_data: Dictionary)
+signal trade_accepted
+signal trade_rejected
+signal trade_completed(received_creature_data: Dictionary)
 
 const DEFAULT_SERVER_URL := "ws://localhost:8080"
 
@@ -70,6 +75,72 @@ func send_battle_action(skill_index: int) -> void:
 		"action": {"skillIndex": skill_index},
 	})
 
+func send_trade_request(target_id: String, creature_index: int) -> void:
+	var creature: CreatureInstance = PartyManager.party[creature_index]
+	_send({
+		"type": "trade_request",
+		"targetId": target_id,
+		"creature": _serialize_creature_for_trade(creature),
+	})
+
+func send_trade_offer(creature_index: int) -> void:
+	var creature: CreatureInstance = PartyManager.party[creature_index]
+	_send({
+		"type": "trade_offer",
+		"creature": _serialize_creature_for_trade(creature),
+		"creatureIndex": creature_index,
+	})
+
+func send_trade_accept() -> void:
+	_send({"type": "trade_accept"})
+
+func send_trade_reject() -> void:
+	_send({"type": "trade_reject"})
+
+func _serialize_creature_for_trade(creature: CreatureInstance) -> Dictionary:
+	var skills := []
+	for skill in creature.active_skills:
+		if skill:
+			skills.append(skill.resource_path)
+	return {
+		"speciesPath": creature.data.resource_path,
+		"nickname": creature.nickname,
+		"level": creature.level,
+		"currentHp": creature.current_hp,
+		"exp": creature.exp,
+		"isNft": creature.is_nft,
+		"nftTokenId": creature.nft_token_id,
+		"isShiny": creature.is_shiny,
+		"activeSkills": skills,
+		"heldItemPath": creature.held_item.resource_path if creature.held_item else "",
+	}
+
+static func deserialize_trade_creature(data: Dictionary) -> CreatureInstance:
+	var species_path: String = data.get("speciesPath", "")
+	var species: CreatureData = load(species_path) as CreatureData
+	if not species:
+		return null
+	var creature := CreatureInstance.new(species, data.get("level", 1))
+	creature.nickname = data.get("nickname", "")
+	creature.current_hp = data.get("currentHp", creature.max_hp())
+	creature.exp = data.get("exp", 0)
+	creature.is_nft = data.get("isNft", false)
+	creature.nft_token_id = data.get("nftTokenId", -1)
+	creature.is_shiny = data.get("isShiny", false)
+	# Restore skills
+	var skill_paths: Array = data.get("activeSkills", [])
+	if skill_paths.size() > 0:
+		creature.active_skills.clear()
+		for path in skill_paths:
+			var skill := load(path)
+			if skill:
+				creature.active_skills.append(skill)
+	# Restore held item
+	var held_path: String = data.get("heldItemPath", "")
+	if held_path != "":
+		creature.held_item = load(held_path) as ItemData
+	return creature
+
 func _send(data: Dictionary) -> void:
 	if _connected:
 		_ws.send_text(JSON.stringify(data))
@@ -96,6 +167,16 @@ func _handle_message(text: String) -> void:
 			turn_changed.emit(msg.get("yourTurn", false))
 		"battle_end":
 			battle_ended.emit(msg)
+		"trade_request":
+			trade_request_received.emit(msg.get("fromId", ""), msg.get("creature", {}))
+		"trade_offer":
+			trade_offer_received.emit(msg.get("creature", {}))
+		"trade_accept":
+			trade_accepted.emit()
+		"trade_reject":
+			trade_rejected.emit()
+		"trade_complete":
+			trade_completed.emit(msg.get("creature", {}))
 		"error":
 			error.emit(msg.get("message", "Unknown error"))
 

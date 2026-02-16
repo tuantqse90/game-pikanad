@@ -4,7 +4,7 @@ extends Node
 ## IndexedDB on web (persistent across sessions).
 
 const SAVE_PATH := "user://save_data.json"
-const SAVE_VERSION := 5
+const SAVE_VERSION := 6
 
 func save_game() -> void:
 	var save_data := {
@@ -192,6 +192,16 @@ func _migrate_save(data: Dictionary, from_version: int) -> Dictionary:
 		# v4 -> v5: Add tutorial completion tracking
 		data["tutorial"] = {}
 		data["save_version"] = 5
+
+	if from_version < 6:
+		# v5 -> v6: Add PvP stats and trade tracking to stats
+		var stats: Dictionary = data.get("stats", {})
+		stats["pvp_wins"] = 0
+		stats["pvp_losses"] = 0
+		stats["trades_completed"] = 0
+		stats["elo_rating"] = 1000
+		data["stats"] = stats
+		data["save_version"] = 6
 
 	return data
 

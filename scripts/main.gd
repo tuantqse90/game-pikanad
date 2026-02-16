@@ -13,6 +13,8 @@ var _dex_screen: Node
 var _daily_popup: Node
 var _stats_panel: Node
 var _stats_btn: Button
+var _multiplayer_hub: Node
+var _mp_btn: Button
 var _particles: CPUParticles2D
 var _showcase_sprites: Array[ColorRect] = []
 
@@ -66,6 +68,15 @@ func _ready() -> void:
 	var dex_idx := dex_btn.get_index()
 	vbox.add_child(_stats_btn)
 	vbox.move_child(_stats_btn, dex_idx + 1)
+
+	# Add Multiplayer button
+	_mp_btn = Button.new()
+	_mp_btn.text = ">> Multiplayer"
+	_mp_btn.custom_minimum_size = Vector2(220, 36)
+	_mp_btn.visible = has_save
+	_mp_btn.pressed.connect(_on_multiplayer)
+	vbox.add_child(_mp_btn)
+	vbox.move_child(_mp_btn, _stats_btn.get_index() + 1)
 
 	# VBox spacing
 	vbox.add_theme_constant_override("separation", 6)
@@ -152,7 +163,7 @@ func _process(delta: float) -> void:
 
 func _create_version_label() -> void:
 	var ver := Label.new()
-	ver.text = "v0.5.0"
+	ver.text = "v0.6.0"
 	ver.add_theme_font_size_override("font_size", 8)
 	ver.add_theme_color_override("font_color", ThemeManager.COL_TEXT_DIM)
 	ver.anchors_preset = Control.PRESET_BOTTOM_RIGHT
@@ -199,6 +210,17 @@ func _on_stats() -> void:
 	add_child(_stats_panel)
 	_stats_panel.closed.connect(func():
 		_stats_panel = null
+	)
+
+func _on_multiplayer() -> void:
+	if _multiplayer_hub:
+		return
+	if SaveManager.has_save():
+		SaveManager.load_game()
+	_multiplayer_hub = load("res://scripts/ui/multiplayer_hub.gd").new()
+	add_child(_multiplayer_hub)
+	_multiplayer_hub.closed.connect(func():
+		_multiplayer_hub = null
 	)
 
 func _on_wallet() -> void:

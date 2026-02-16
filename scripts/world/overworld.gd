@@ -157,11 +157,10 @@ func _create_npcs() -> void:
 
 	var trader: Area2D = NPC_SCENE.instantiate()
 	trader.npc_name = "Trader"
-	trader.npc_type = trader.NPCType.TALKER
+	trader.npc_type = trader.NPCType.TRADER
 	trader.npc_color = Color(0.8, 0.6, 0.2)
 	trader.dialogue_lines = [
-		"Trading is coming soon! Stay tuned.",
-		"Soon you'll be able to trade creatures with other players!",
+		"Want to trade creatures? I've got some good ones!",
 	]
 	trader.position = Vector2(120, 80)
 	add_child(trader)

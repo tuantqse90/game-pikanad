@@ -146,13 +146,26 @@ func _init_skills_for_level() -> void:
 		# Fallback to data.skills
 		active_skills = data.skills.duplicate()
 
-## Check if creature can evolve at current level.
+## Check if creature can evolve at current level (excludes trade-evolution creatures).
 func can_evolve() -> bool:
 	if not data:
 		return false
+	if data.trade_evolution:
+		return false  # Trade-evo creatures only evolve via trading
 	if data.evolution_level <= 0 or not data.evolves_into:
 		return false
 	if level < data.evolution_level:
+		return false
+	# Check for Everstone
+	if held_item and held_item.held_effect == ItemData.HeldEffect.PREVENT_EVOLUTION:
+		return false
+	return true
+
+## Check if creature can evolve via trade.
+func can_trade_evolve() -> bool:
+	if not data:
+		return false
+	if not data.trade_evolution or not data.evolves_into:
 		return false
 	# Check for Everstone
 	if held_item and held_item.held_effect == ItemData.HeldEffect.PREVENT_EVOLUTION:
@@ -178,6 +191,26 @@ func evolve() -> void:
 	# Re-init skills for new species
 	_init_skills_for_level()
 	# Track quest/stats
+	QuestManager.increment_quest("evolve")
+	StatsManager.increment("creatures_evolved")
+
+## Perform trade evolution. Same as evolve() but for trade-evo species.
+func trade_evolve() -> void:
+	if not can_trade_evolve():
+		return
+	var hp_ratio := float(current_hp) / float(max(1, max_hp()))
+	var old_nft := is_nft
+	var old_token := nft_token_id
+	var old_nickname := nickname
+	var was_default_name := (nickname == data.species_name)
+
+	data = data.evolves_into
+	current_hp = max(1, int(max_hp() * hp_ratio))
+	is_nft = old_nft
+	nft_token_id = old_token
+	if was_default_name:
+		nickname = data.species_name
+	_init_skills_for_level()
 	QuestManager.increment_quest("evolve")
 	StatsManager.increment("creatures_evolved")
 

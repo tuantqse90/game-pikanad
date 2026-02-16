@@ -11,6 +11,10 @@ var total_damage_dealt: int = 0
 var zones_explored: Array[String] = []
 var play_time_seconds: float = 0.0
 var shinies_found: int = 0
+var pvp_wins: int = 0
+var pvp_losses: int = 0
+var trades_completed: int = 0
+var elo_rating: int = 1000
 
 func _process(delta: float) -> void:
 	if GameManager and GameManager.state != GameManager.GameState.MENU:
@@ -32,6 +36,18 @@ func increment(stat_name: String, amount: int = 1) -> void:
 			total_damage_dealt += amount
 		"shinies_found":
 			shinies_found += amount
+		"pvp_wins":
+			pvp_wins += amount
+		"pvp_losses":
+			pvp_losses += amount
+		"trades_completed":
+			trades_completed += amount
+
+func update_elo(won: bool) -> void:
+	var k := 32
+	var expected := 1.0 / (1.0 + pow(10.0, 0.0 / 400.0))  # Simplified: assume equal opponent
+	var actual := 1.0 if won else 0.0
+	elo_rating = max(100, elo_rating + int(k * (actual - expected)))
 
 func add_zone(zone_name: String) -> void:
 	if zone_name not in zones_explored:
@@ -55,6 +71,14 @@ func get_stat(stat_name: String) -> int:
 			return shinies_found
 		"zones_explored":
 			return zones_explored.size()
+		"pvp_wins":
+			return pvp_wins
+		"pvp_losses":
+			return pvp_losses
+		"trades_completed":
+			return trades_completed
+		"elo_rating":
+			return elo_rating
 	return 0
 
 func get_play_time_string() -> String:
@@ -74,6 +98,10 @@ func serialize() -> Dictionary:
 		"zones_explored": zones_explored.duplicate(),
 		"play_time_seconds": play_time_seconds,
 		"shinies_found": shinies_found,
+		"pvp_wins": pvp_wins,
+		"pvp_losses": pvp_losses,
+		"trades_completed": trades_completed,
+		"elo_rating": elo_rating,
 	}
 
 func deserialize(data: Dictionary) -> void:
@@ -89,3 +117,7 @@ func deserialize(data: Dictionary) -> void:
 		zones_explored.append(str(z))
 	play_time_seconds = float(data.get("play_time_seconds", 0.0))
 	shinies_found = int(data.get("shinies_found", 0))
+	pvp_wins = int(data.get("pvp_wins", 0))
+	pvp_losses = int(data.get("pvp_losses", 0))
+	trades_completed = int(data.get("trades_completed", 0))
+	elo_rating = int(data.get("elo_rating", 1000))

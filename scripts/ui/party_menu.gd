@@ -17,10 +17,14 @@ func _ready() -> void:
 	panel.custom_minimum_size = Vector2(480, 320)
 
 func _input(event: InputEvent) -> void:
-	if event.is_action_pressed("open_menu") and GameManager.state == GameManager.GameState.OVERWORLD:
+	if _is_open and event.is_action_pressed("ui_cancel"):
+		close_menu()
+		get_viewport().set_input_as_handled()
+		return
+	if event.is_action_pressed("open_menu"):
 		if _is_open:
 			close_menu()
-		else:
+		elif GameManager.state == GameManager.GameState.OVERWORLD:
 			open_menu()
 
 func open_menu() -> void:

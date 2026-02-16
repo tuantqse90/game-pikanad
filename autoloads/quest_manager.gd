@@ -10,6 +10,8 @@ const QUEST_POOL := [
 	{"id": "win_2", "desc": "Win 2 battles", "type": "win_battle", "target": 2, "gold": 150, "item": "Potion"},
 	{"id": "explore_2", "desc": "Explore 2 zones", "type": "explore_zone", "target": 2, "gold": 100, "item": "Capture Ball"},
 	{"id": "evolve_1", "desc": "Evolve 1 creature", "type": "evolve", "target": 1, "gold": 300, "item": ""},
+	{"id": "pvp_1", "desc": "Win 1 PvP battle", "type": "win_pvp", "target": 1, "gold": 250, "item": "Super Ball"},
+	{"id": "trade_1", "desc": "Complete 1 trade", "type": "complete_trade", "target": 1, "gold": 200, "item": "Potion"},
 ]
 
 var active_quests: Array[Dictionary] = []

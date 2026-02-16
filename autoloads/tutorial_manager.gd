@@ -15,6 +15,8 @@ const STEPS := [
 	"shop_hint",
 	"dex_hint",
 	"quest_hint",
+	"first_trade",
+	"trade_evolution",
 ]
 
 # Tutorial step dialogue content
@@ -67,6 +69,16 @@ const STEP_TEXT := {
 	"quest_hint": [
 		"Tip: Press Q to check your daily quests!",
 		"Complete quests for gold and item rewards.",
+	],
+	"first_trade": [
+		"You completed your first trade!",
+		"Trading lets you get creatures from other elements.",
+		"Some creatures only evolve when traded!",
+	],
+	"trade_evolution": [
+		"Your traded creature evolved!",
+		"Certain species like Boulderkin and Vinewhisker",
+		"only evolve through trading — look for the trade icon!",
 	],
 }
 

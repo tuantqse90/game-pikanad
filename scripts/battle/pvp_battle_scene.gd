@@ -2,9 +2,13 @@ extends Node2D
 
 ## PvP Battle scene — wires PvP BattleManager to BattleHUD.
 ## Same structure as battle_scene.gd but uses server-driven state.
+## Includes gold rewards, ELO update, win/loss stats, and post-battle summary.
 
 @onready var battle_manager = $PvPBattleManager
 @onready var hud = $BattleHUD
+
+const PVP_WIN_GOLD := 300
+const PVP_LOSE_GOLD := 50
 
 func _ready() -> void:
 	# Connect manager -> HUD (same signals as regular battle)
@@ -49,5 +53,100 @@ func _on_state_changed(new_state: int) -> void:
 		hud.run_btn.visible = false
 
 func _on_battle_ended(result: String) -> void:
-	await get_tree().create_timer(1.0).timeout
-	SceneManager.go_to_overworld()
+	var won := result == "win"
+
+	# Update stats
+	if won:
+		StatsManager.increment("pvp_wins")
+		QuestManager.increment_quest("win_pvp")
+		AudioManager.play_sound(AudioManager.SFX.PVP_WIN)
+	else:
+		StatsManager.increment("pvp_losses")
+		AudioManager.play_sound(AudioManager.SFX.PVP_LOSE)
+
+	# Update ELO
+	StatsManager.update_elo(won)
+
+	# Gold reward
+	var gold_reward := PVP_WIN_GOLD if won else PVP_LOSE_GOLD
+	if InventoryManager:
+		InventoryManager.add_gold(gold_reward)
+
+	# Show post-battle summary
+	_show_summary(won, gold_reward)
+
+func _show_summary(won: bool, gold: int) -> void:
+	var summary_layer := CanvasLayer.new()
+	summary_layer.layer = 60
+	add_child(summary_layer)
+
+	# Dark backdrop
+	var backdrop := ColorRect.new()
+	backdrop.color = Color(0, 0, 0, 0.75)
+	backdrop.anchors_preset = Control.PRESET_FULL_RECT
+	backdrop.anchor_right = 1.0
+	backdrop.anchor_bottom = 1.0
+	summary_layer.add_child(backdrop)
+
+	# Summary panel
+	var panel := PanelContainer.new()
+	panel.anchors_preset = Control.PRESET_CENTER
+	panel.anchor_left = 0.5
+	panel.anchor_top = 0.5
+	panel.anchor_right = 0.5
+	panel.anchor_bottom = 0.5
+	panel.offset_left = -140
+	panel.offset_top = -100
+	panel.offset_right = 140
+	panel.offset_bottom = 100
+	summary_layer.add_child(panel)
+
+	var vbox := VBoxContainer.new()
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_theme_constant_override("separation", 8)
+	panel.add_child(vbox)
+
+	# Result title
+	var title := Label.new()
+	title.text = "VICTORY!" if won else "DEFEAT"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 18)
+	if won:
+		title.add_theme_color_override("font_color", ThemeManager.COL_ACCENT_GOLD)
+	else:
+		title.add_theme_color_override("font_color", ThemeManager.COL_ACCENT_RED)
+	vbox.add_child(title)
+
+	# Gold reward
+	var gold_label := Label.new()
+	gold_label.text = "+%d Gold" % gold
+	gold_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	gold_label.add_theme_font_size_override("font_size", 12)
+	gold_label.add_theme_color_override("font_color", ThemeManager.COL_ACCENT_GOLD)
+	vbox.add_child(gold_label)
+
+	# ELO
+	var elo_label := Label.new()
+	elo_label.text = "ELO: %d" % StatsManager.elo_rating
+	elo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	elo_label.add_theme_font_size_override("font_size", 11)
+	elo_label.add_theme_color_override("font_color", ThemeManager.COL_ACCENT)
+	vbox.add_child(elo_label)
+
+	# Record
+	var record_label := Label.new()
+	record_label.text = "Record: %dW / %dL" % [StatsManager.pvp_wins, StatsManager.pvp_losses]
+	record_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	record_label.add_theme_font_size_override("font_size", 10)
+	record_label.add_theme_color_override("font_color", ThemeManager.COL_TEXT_DIM)
+	vbox.add_child(record_label)
+
+	# Continue button
+	var continue_btn := Button.new()
+	continue_btn.text = "Continue"
+	continue_btn.custom_minimum_size = Vector2(100, 30)
+	continue_btn.pressed.connect(func():
+		SceneManager.go_to_overworld()
+	)
+	vbox.add_child(continue_btn)
+	continue_btn.grab_focus()

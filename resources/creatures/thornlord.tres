@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="CreatureData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://resources/creature_data.gd" id="1"]
+[ext_resource type="Resource" path="res://resources/skills/razor_leaf.tres" id="2"]
+[ext_resource type="Resource" path="res://resources/skills/drain_life.tres" id="3"]
+[ext_resource type="Texture2D" path="res://assets/sprites/thornlord.png" id="4"]
+[ext_resource type="Texture2D" path="res://assets/sprites/thornlord_battle.png" id="5"]
+[ext_resource type="Texture2D" path="res://assets/sprites/thornlord_overworld.png" id="6"]
+
+[resource]
+script = ExtResource("1")
+species_name = "Thornlord"
+species_id = 17
+element = 2
+rarity = 2
+base_hp = 58
+base_attack = 17
+base_defense = 15
+base_speed = 14
+skills = [ExtResource("2"), ExtResource("3")]
+sprite_texture = ExtResource("4")
+battle_texture = ExtResource("5")
+overworld_texture = ExtResource("6")
+capture_rate = 0.2
+exp_yield = 50
+learn_set = [{"level": 1, "skill_path": "res://resources/skills/tackle.tres"}, {"level": 3, "skill_path": "res://resources/skills/vine_whip.tres"}, {"level": 8, "skill_path": "res://resources/skills/leech_seed.tres"}, {"level": 12, "skill_path": "res://resources/skills/quick_attack.tres"}, {"level": 16, "skill_path": "res://resources/skills/razor_leaf.tres"}, {"level": 20, "skill_path": "res://resources/skills/drain_life.tres"}]
+dex_number = 17

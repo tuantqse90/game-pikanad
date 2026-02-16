@@ -1,11 +1,11 @@
 extends CanvasLayer
 
-## Stats Panel — displays player statistics.
+## Leaderboard Panel — shows local PvP stats: record, ELO, trades, win rate.
 
 signal closed
 
 func _ready() -> void:
-	layer = 50
+	layer = 55
 	_build_ui()
 
 func _build_ui() -> void:
@@ -24,10 +24,10 @@ func _build_ui() -> void:
 	panel.anchor_top = 0.5
 	panel.anchor_right = 0.5
 	panel.anchor_bottom = 0.5
-	panel.offset_left = -180
-	panel.offset_top = -140
-	panel.offset_right = 180
-	panel.offset_bottom = 140
+	panel.offset_left = -160
+	panel.offset_top = -120
+	panel.offset_right = 160
+	panel.offset_bottom = 120
 	add_child(panel)
 
 	var vbox := VBoxContainer.new()
@@ -37,27 +37,35 @@ func _build_ui() -> void:
 
 	# Title
 	var title := Label.new()
-	title.text = "Player Stats"
+	title.text = "Leaderboard"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 16)
-	title.add_theme_color_override("font_color", Color(1.0, 0.9, 0.3))
+	title.add_theme_color_override("font_color", ThemeManager.COL_ACCENT_GOLD)
 	vbox.add_child(title)
 
-	# Stats list
+	# ELO rating (featured)
+	var elo_label := Label.new()
+	elo_label.text = "ELO Rating: %d" % StatsManager.elo_rating
+	elo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	elo_label.add_theme_font_size_override("font_size", 14)
+	elo_label.add_theme_color_override("font_color", ThemeManager.COL_ACCENT)
+	vbox.add_child(elo_label)
+
+	var sep := HSeparator.new()
+	vbox.add_child(sep)
+
+	# Stats rows
+	var total_pvp := StatsManager.pvp_wins + StatsManager.pvp_losses
+	var win_rate := 0.0
+	if total_pvp > 0:
+		win_rate = float(StatsManager.pvp_wins) / float(total_pvp) * 100.0
+
 	var stats := [
-		["Battles Won", str(StatsManager.battles_won)],
-		["Battles Lost", str(StatsManager.battles_lost)],
-		["PvP Wins", str(StatsManager.pvp_wins)],
-		["PvP Losses", str(StatsManager.pvp_losses)],
-		["ELO Rating", str(StatsManager.elo_rating)],
-		["Trades Done", str(StatsManager.trades_completed)],
-		["Creatures Caught", str(StatsManager.creatures_caught)],
-		["Creatures Evolved", str(StatsManager.creatures_evolved)],
-		["Trainers Defeated", str(StatsManager.trainers_defeated)],
-		["Total Damage Dealt", str(StatsManager.total_damage_dealt)],
-		["Zones Explored", str(StatsManager.zones_explored.size())],
-		["Shinies Found", str(StatsManager.shinies_found)],
-		["Play Time", StatsManager.get_play_time_string()],
+		["PvP Wins", str(StatsManager.pvp_wins), ThemeManager.COL_ACCENT_GREEN],
+		["PvP Losses", str(StatsManager.pvp_losses), ThemeManager.COL_ACCENT_RED],
+		["Win Rate", "%.1f%%" % win_rate, ThemeManager.COL_ACCENT],
+		["Total PvP", str(total_pvp), ThemeManager.COL_TEXT_BRIGHT],
+		["Trades Done", str(StatsManager.trades_completed), Color(0.3, 0.85, 0.9)],
 	]
 
 	for stat_entry in stats:
@@ -74,7 +82,7 @@ func _build_ui() -> void:
 		var value_label := Label.new()
 		value_label.text = stat_entry[1]
 		value_label.add_theme_font_size_override("font_size", 11)
-		value_label.add_theme_color_override("font_color", Color(0.3, 0.9, 0.4))
+		value_label.add_theme_color_override("font_color", stat_entry[2])
 		value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		row.add_child(value_label)
 

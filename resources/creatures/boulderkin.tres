@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="CreatureData" load_steps=7 format=3]
+[gd_resource type="Resource" script_class="CreatureData" load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://resources/creature_data.gd" id="1"]
 [ext_resource type="Resource" path="res://resources/skills/rock_toss.tres" id="2"]
@@ -6,6 +6,7 @@
 [ext_resource type="Texture2D" path="res://assets/sprites/boulderkin.png" id="4"]
 [ext_resource type="Texture2D" path="res://assets/sprites/boulderkin_battle.png" id="5"]
 [ext_resource type="Texture2D" path="res://assets/sprites/boulderkin_overworld.png" id="6"]
+[ext_resource type="Resource" path="res://resources/creatures/titanrock.tres" id="7"]
 
 [resource]
 script = ExtResource("1")
@@ -23,5 +24,7 @@ battle_texture = ExtResource("5")
 overworld_texture = ExtResource("6")
 capture_rate = 0.35
 exp_yield = 38
+evolves_into = ExtResource("7")
+trade_evolution = true
 learn_set = [{"level": 1, "skill_path": "res://resources/skills/tackle.tres"}, {"level": 1, "skill_path": "res://resources/skills/rock_toss.tres"}, {"level": 7, "skill_path": "res://resources/skills/iron_wall.tres"}, {"level": 10, "skill_path": "res://resources/skills/sand_tomb.tres"}, {"level": 14, "skill_path": "res://resources/skills/boulder_crush.tres"}, {"level": 18, "skill_path": "res://resources/skills/tectonic_slam.tres"}, {"level": 24, "skill_path": "res://resources/skills/earthquake.tres"}]
 dex_number = 15

@@ -11,7 +11,7 @@ enum DexStatus { UNSEEN, SEEN, CAUGHT }
 var entries: Dictionary = {}
 
 # Total species count (updated as creatures are discovered)
-const TOTAL_SPECIES := 15
+const TOTAL_SPECIES := 17
 
 func mark_seen(species_id: int) -> void:
 	if not entries.has(species_id) or entries[species_id] == DexStatus.UNSEEN:

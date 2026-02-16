@@ -35,6 +35,10 @@ static func _generate_sfx(sfx_id: int) -> AudioStreamWAV:
 		16:  return _evolve_complete()
 		17:  return _level_up()
 		18:  return _badge_earn()
+		19:  return _trade_offer()
+		20:  return _trade_complete()
+		21:  return _pvp_win()
+		22:  return _pvp_lose()
 	return _button_click()
 
 # ── UI SFX ──────────────────────────────────────────────────────────────────
@@ -210,3 +214,51 @@ static func _badge_earn() -> AudioStreamWAV:
 		{freq = 988.0, duration_beats = 0.8},
 	]
 	return ToneGenerator.generate_melody(notes, 180.0, ToneGenerator.WaveType.TRIANGLE, 0.4, false)
+
+# ── Trade SFX ──────────────────────────────────────────────────────────────
+
+static func _trade_offer() -> AudioStreamWAV:
+	# Curious ascending ping
+	var notes := [
+		{freq = 500.0, duration_beats = 0.15},
+		{freq = 700.0, duration_beats = 0.15},
+		{freq = 900.0, duration_beats = 0.2},
+	]
+	return ToneGenerator.generate_melody(notes, 280.0, ToneGenerator.WaveType.SINE, 0.3, false)
+
+static func _trade_complete() -> AudioStreamWAV:
+	# Successful exchange jingle
+	var notes := [
+		{freq = 523.0, duration_beats = 0.2},
+		{freq = 659.0, duration_beats = 0.2},
+		{freq = 784.0, duration_beats = 0.2},
+		{freq = 1047.0, duration_beats = 0.3},
+		{freq = 784.0, duration_beats = 0.15},
+		{freq = 1047.0, duration_beats = 0.5},
+	]
+	return ToneGenerator.generate_melody(notes, 200.0, ToneGenerator.WaveType.TRIANGLE, 0.35, false)
+
+# ── PvP SFX ────────────────────────────────────────────────────────────────
+
+static func _pvp_win() -> AudioStreamWAV:
+	# Triumphant fanfare
+	var notes := [
+		{freq = 523.0, duration_beats = 0.2},
+		{freq = 659.0, duration_beats = 0.2},
+		{freq = 784.0, duration_beats = 0.2},
+		{freq = 1047.0, duration_beats = 0.5},
+		{freq = 880.0, duration_beats = 0.15},
+		{freq = 1047.0, duration_beats = 0.15},
+		{freq = 1319.0, duration_beats = 0.8},
+	]
+	return ToneGenerator.generate_melody(notes, 180.0, ToneGenerator.WaveType.TRIANGLE, 0.4, false)
+
+static func _pvp_lose() -> AudioStreamWAV:
+	# Somber descending tones
+	var notes := [
+		{freq = 500.0, duration_beats = 0.3},
+		{freq = 400.0, duration_beats = 0.3},
+		{freq = 330.0, duration_beats = 0.3},
+		{freq = 260.0, duration_beats = 0.6},
+	]
+	return ToneGenerator.generate_melody(notes, 140.0, ToneGenerator.WaveType.TRIANGLE, 0.3, false)

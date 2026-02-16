@@ -3,7 +3,7 @@ extends Area2D
 ## Base NPC class with multi-part body visual, floating "!" indicator,
 ## and type icon. NPCs can talk, heal, sell items, or challenge as trainers.
 
-enum NPCType { TALKER, HEALER, SHOPKEEPER, TRAINER }
+enum NPCType { TALKER, HEALER, SHOPKEEPER, TRAINER, TRADER }
 
 @export var npc_name: String = "NPC"
 @export var npc_type: NPCType = NPCType.TALKER
@@ -76,6 +76,9 @@ func _ready() -> void:
 		NPCType.TALKER:
 			type_icon.text = "..."
 			type_icon.add_theme_color_override("font_color", ThemeManager.COL_TEXT_DIM)
+		NPCType.TRADER:
+			type_icon.text = "<>"
+			type_icon.add_theme_color_override("font_color", Color(0.3, 0.85, 0.9))
 	add_child(type_icon)
 
 	# Floating "!" indicator (hidden until interactable)
@@ -112,6 +115,30 @@ func interact() -> void:
 			_open_shop()
 		NPCType.TRAINER:
 			_challenge_trainer()
+		NPCType.TRADER:
+			_open_trade()
+
+func _open_trade() -> void:
+	GameManager.change_state(GameManager.GameState.PAUSED)
+	if PartyManager.party_size() == 0:
+		var dialogue_box = _get_dialogue_box()
+		if dialogue_box:
+			dialogue_box.show_dialogue(
+				["You don't have any creatures to trade!"],
+				func(): GameManager.change_state(GameManager.GameState.OVERWORLD)
+			)
+		return
+	var trade_scene := load("res://scripts/ui/npc_trade_menu.gd")
+	var trade_menu := trade_scene.new()
+	get_tree().current_scene.add_child(trade_menu)
+	trade_menu.trade_completed.connect(func(_idx, _creature):
+		# Tutorial: first trade
+		if TutorialManager and not TutorialManager.is_completed("first_trade"):
+			TutorialManager.show_tutorial("first_trade")
+	)
+	trade_menu.closed.connect(func():
+		GameManager.change_state(GameManager.GameState.OVERWORLD)
+	)
 
 func _show_dialogue() -> void:
 	GameManager.change_state(GameManager.GameState.PAUSED)
