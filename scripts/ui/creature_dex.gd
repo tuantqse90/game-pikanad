@@ -51,13 +51,13 @@ func _load_all_creatures() -> void:
 func open_dex() -> void:
 	_is_open = true
 	_previous_state = GameManager.state
-	panel.visible = true
 	detail_panel.visible = false
 	_refresh_grid()
+	ThemeManager.animate_panel_open(panel)
 
 func close_dex() -> void:
 	_is_open = false
-	panel.visible = false
+	ThemeManager.animate_panel_close(panel)
 	GameManager.change_state(_previous_state)
 
 func _refresh_grid() -> void:

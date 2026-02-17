@@ -18,7 +18,7 @@ func _setup_input_actions() -> void:
 	_add_key_action("move_left", KEY_A, KEY_LEFT)
 	_add_key_action("move_right", KEY_D, KEY_RIGHT)
 	_add_key_action("ui_accept", KEY_ENTER, KEY_SPACE)
-	_add_key_action("ui_cancel", KEY_ESCAPE)
+	_add_key_action("ui_cancel", KEY_ESCAPE, KEY_BACKSPACE)
 	_add_key_action("open_menu", KEY_TAB)
 	_add_key_action("run", KEY_SHIFT)
 	_add_key_action("toggle_battle_speed", KEY_B)

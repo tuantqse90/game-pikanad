@@ -16,7 +16,11 @@ var _stats_btn: Button
 var _multiplayer_hub: Node
 var _mp_btn: Button
 var _particles: CPUParticles2D
+var _warm_particles: CPUParticles2D
 var _showcase_sprites: Array[ColorRect] = []
+var _title_label: Label
+var _title_glow_time := 0.0
+var _gradient_overlay: ColorRect
 
 func _ready() -> void:
 	GameManager.change_state(GameManager.GameState.MENU)
@@ -25,13 +29,13 @@ func _ready() -> void:
 	# Style the background
 	$Background.color = ThemeManager.COL_BG_DARKEST
 
-	# Style title label
-	var title: Label = $CenterContainer/VBoxContainer/TitleLabel
-	title.add_theme_font_size_override("font_size", 24)
-	title.add_theme_color_override("font_color", ThemeManager.COL_ACCENT_GOLD)
-	title.add_theme_constant_override("shadow_offset_x", 2)
-	title.add_theme_constant_override("shadow_offset_y", 2)
-	title.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.6))
+	# Style title label with glow pulse
+	_title_label = $CenterContainer/VBoxContainer/TitleLabel
+	_title_label.add_theme_font_size_override("font_size", 24)
+	_title_label.add_theme_color_override("font_color", ThemeManager.COL_ACCENT_GOLD)
+	_title_label.add_theme_constant_override("shadow_offset_x", 2)
+	_title_label.add_theme_constant_override("shadow_offset_y", 2)
+	_title_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.6))
 
 	# Style subtitle
 	var subtitle: Label = $CenterContainer/VBoxContainer/SubtitleLabel
@@ -53,6 +57,10 @@ func _ready() -> void:
 	quit_btn.pressed.connect(_on_quit)
 	start_btn.grab_focus()
 
+	# Button hover/press animations
+	for btn in [start_btn, continue_btn, dex_btn, wallet_btn, quit_btn]:
+		ThemeManager.apply_button_hover_anim(btn)
+
 	# Show/hide Continue and Dex buttons based on save existence
 	var has_save := SaveManager.has_save()
 	continue_btn.visible = has_save
@@ -68,6 +76,7 @@ func _ready() -> void:
 	var dex_idx := dex_btn.get_index()
 	vbox.add_child(_stats_btn)
 	vbox.move_child(_stats_btn, dex_idx + 1)
+	ThemeManager.apply_button_hover_anim(_stats_btn)
 
 	# Add Multiplayer button
 	_mp_btn = Button.new()
@@ -77,6 +86,7 @@ func _ready() -> void:
 	_mp_btn.pressed.connect(_on_multiplayer)
 	vbox.add_child(_mp_btn)
 	vbox.move_child(_mp_btn, _stats_btn.get_index() + 1)
+	ThemeManager.apply_button_hover_anim(_mp_btn)
 
 	# VBox spacing
 	vbox.add_theme_constant_override("separation", 6)
@@ -89,6 +99,17 @@ func _ready() -> void:
 
 	# Version label (bottom-right)
 	_create_version_label()
+
+	# Button stagger animation on appear
+	ThemeManager.animate_stagger(vbox)
+
+	# Animated gradient overlay (slow horizontal drift)
+	_gradient_overlay = ColorRect.new()
+	_gradient_overlay.color = Color(0.15, 0.1, 0.25, 0.08)
+	_gradient_overlay.size = Vector2(640, 360)
+	_gradient_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_gradient_overlay.z_index = -1
+	add_child(_gradient_overlay)
 
 	# Show daily reward popup if available
 	_check_daily_reward()
@@ -112,9 +133,14 @@ func _style_menu_button(btn: Button, text: String) -> void:
 	btn.custom_minimum_size = Vector2(220, 36)
 
 func _create_particles() -> void:
+	var particles_holder := Node2D.new()
+	particles_holder.z_index = -1
+	add_child(particles_holder)
+
+	# Blue sparkles (35 particles)
 	_particles = CPUParticles2D.new()
 	_particles.emitting = true
-	_particles.amount = 20
+	_particles.amount = 35
 	_particles.lifetime = 4.0
 	_particles.one_shot = false
 	_particles.explosiveness = 0.0
@@ -129,12 +155,27 @@ func _create_particles() -> void:
 	_particles.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
 	_particles.emission_rect_extents = Vector2(320, 180)
 	_particles.position = Vector2(320, 180)
-	_particles.z_index = -1
-	# Add as Node2D child to background
-	var particles_holder := Node2D.new()
-	particles_holder.z_index = -1
-	add_child(particles_holder)
 	particles_holder.add_child(_particles)
+
+	# Warm gold sparkles (10 particles)
+	_warm_particles = CPUParticles2D.new()
+	_warm_particles.emitting = true
+	_warm_particles.amount = 10
+	_warm_particles.lifetime = 5.0
+	_warm_particles.one_shot = false
+	_warm_particles.explosiveness = 0.0
+	_warm_particles.direction = Vector2(0, -1)
+	_warm_particles.spread = 180.0
+	_warm_particles.gravity = Vector2(0, -3)
+	_warm_particles.initial_velocity_min = 3.0
+	_warm_particles.initial_velocity_max = 10.0
+	_warm_particles.scale_amount_min = 0.8
+	_warm_particles.scale_amount_max = 2.0
+	_warm_particles.color = Color(1.0, 0.85, 0.25, 0.1)
+	_warm_particles.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	_warm_particles.emission_rect_extents = Vector2(320, 180)
+	_warm_particles.position = Vector2(320, 180)
+	particles_holder.add_child(_warm_particles)
 
 func _create_creature_showcase() -> void:
 	var colors := [
@@ -160,6 +201,16 @@ func _process(delta: float) -> void:
 	for i in _showcase_sprites.size():
 		var offset_y := sin(_breathe_time + i * 1.2) * 3.0
 		_showcase_sprites[i].position.y = 260 + offset_y
+
+	# Title glow pulse (gold warmth oscillation)
+	_title_glow_time += delta * 2.0
+	if _title_label:
+		var glow := 0.85 + sin(_title_glow_time) * 0.15
+		_title_label.modulate = Color(1.0, glow, glow * 0.8, 1.0)
+
+	# Gradient overlay slow horizontal drift
+	if _gradient_overlay:
+		_gradient_overlay.position.x = sin(_breathe_time * 0.3) * 20.0
 
 func _create_version_label() -> void:
 	var ver := Label.new()

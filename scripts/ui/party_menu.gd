@@ -12,30 +12,35 @@ var _is_open := false
 func _ready() -> void:
 	panel.visible = false
 	close_btn.pressed.connect(close_menu)
+	close_btn.focus_mode = Control.FOCUS_NONE
+	ThemeManager.apply_button_hover_anim(close_btn)
 
 	# Larger panel
 	panel.custom_minimum_size = Vector2(480, 320)
 
 func _input(event: InputEvent) -> void:
-	if _is_open and event.is_action_pressed("ui_cancel"):
+	if not event is InputEventKey or not event.pressed or event.echo:
+		return
+	# Check both keycode and physical_keycode (web may only set one)
+	var key: int = event.keycode
+	if key == KEY_NONE:
+		key = event.physical_keycode
+	if _is_open and key in [KEY_ESCAPE, KEY_TAB, KEY_BACKSPACE]:
 		close_menu()
 		get_viewport().set_input_as_handled()
-		return
-	if event.is_action_pressed("open_menu"):
-		if _is_open:
-			close_menu()
-		elif GameManager.state == GameManager.GameState.OVERWORLD:
-			open_menu()
+	elif not _is_open and key == KEY_TAB and GameManager.state == GameManager.GameState.OVERWORLD:
+		open_menu()
+		get_viewport().set_input_as_handled()
 
 func open_menu() -> void:
 	_is_open = true
-	panel.visible = true
 	GameManager.change_state(GameManager.GameState.PAUSED)
 	_refresh_list()
+	ThemeManager.animate_panel_open(panel)
 
 func close_menu() -> void:
 	_is_open = false
-	panel.visible = false
+	ThemeManager.animate_panel_close(panel)
 	GameManager.change_state(GameManager.GameState.OVERWORLD)
 
 func _refresh_list() -> void:
@@ -56,6 +61,7 @@ func _refresh_list() -> void:
 		heal_btn.add_theme_color_override("font_color", ThemeManager.COL_ACCENT_GREEN)
 		heal_btn.pressed.connect(_on_heal_all)
 		creature_list.add_child(heal_btn)
+		ThemeManager.apply_button_hover_anim(heal_btn)
 		var sep := HSeparator.new()
 		creature_list.add_child(sep)
 
@@ -183,6 +189,7 @@ func _create_entry(creature: CreatureInstance) -> PanelContainer:
 	var creature_ref := creature
 	equip_btn.pressed.connect(func(): _toggle_held_item(creature_ref))
 	held_row.add_child(equip_btn)
+	ThemeManager.apply_button_hover_anim(equip_btn)
 	container.add_child(held_row)
 
 	return card

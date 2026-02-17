@@ -186,3 +186,81 @@ static func get_status_color(status_name: String) -> Color:
 		"Paralyze": return Color(0.95, 0.85, 0.2)
 		"Shield": return Color(0.3, 0.85, 0.9)
 	return COL_TEXT_DIM
+
+# ── Animation Helpers ─────────────────────────────────────────────
+
+## Scale from 0.8 + fade in, ease-out-back
+static func animate_panel_open(control: Control) -> void:
+	control.visible = true
+	control.pivot_offset = control.size * 0.5
+	control.scale = Vector2(0.8, 0.8)
+	control.modulate.a = 0.0
+	var tw := control.create_tween().set_parallel(true)
+	tw.tween_property(control, "scale", Vector2.ONE, 0.25).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	tw.tween_property(control, "modulate:a", 1.0, 0.2).set_ease(Tween.EASE_OUT)
+
+## Scale to 0.85 + fade out, then hide
+static func animate_panel_close(control: Control, then_free: bool = false) -> void:
+	control.pivot_offset = control.size * 0.5
+	var tw := control.create_tween().set_parallel(true)
+	tw.tween_property(control, "scale", Vector2(0.85, 0.85), 0.2).set_ease(Tween.EASE_IN)
+	tw.tween_property(control, "modulate:a", 0.0, 0.2).set_ease(Tween.EASE_IN)
+	tw.chain().tween_callback(func():
+		control.visible = false
+		control.scale = Vector2.ONE
+		control.modulate.a = 1.0
+		if then_free:
+			control.queue_free()
+	)
+
+## Fade backdrop alpha from 0 to target
+static func animate_backdrop_in(backdrop: CanvasItem, target_alpha: float = 0.7) -> void:
+	backdrop.modulate.a = 0.0
+	var tw := backdrop.create_tween()
+	tw.tween_property(backdrop, "modulate:a", target_alpha, 0.2).set_ease(Tween.EASE_OUT)
+
+## Hover 1.05x scale, press 0.95x scale
+static func apply_button_hover_anim(btn: Button) -> void:
+	btn.pivot_offset = btn.size * 0.5
+	btn.mouse_entered.connect(func():
+		btn.pivot_offset = btn.size * 0.5
+		var tw := btn.create_tween()
+		tw.tween_property(btn, "scale", Vector2(1.05, 1.05), 0.1).set_ease(Tween.EASE_OUT)
+	)
+	btn.mouse_exited.connect(func():
+		var tw := btn.create_tween()
+		tw.tween_property(btn, "scale", Vector2.ONE, 0.1).set_ease(Tween.EASE_OUT)
+	)
+	btn.button_down.connect(func():
+		var tw := btn.create_tween()
+		tw.tween_property(btn, "scale", Vector2(0.95, 0.95), 0.05)
+	)
+	btn.button_up.connect(func():
+		var tw := btn.create_tween()
+		tw.tween_property(btn, "scale", Vector2(1.05, 1.05), 0.05)
+	)
+
+## Children appear one-by-one with slide-up + fade
+static func animate_stagger(container: Control, delay: float = 0.06) -> void:
+	for i in container.get_child_count():
+		var child: Control = container.get_child(i) as Control
+		if not child:
+			continue
+		child.modulate.a = 0.0
+		child.position.y += 10
+		var tw := child.create_tween()
+		tw.tween_interval(i * delay)
+		tw.tween_property(child, "modulate:a", 1.0, 0.2).set_ease(Tween.EASE_OUT)
+		tw.parallel().tween_property(child, "position:y", child.position.y - 10, 0.2).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+
+## Dark overlay with vignette corners for depth
+static func create_vignette_backdrop(parent: Node) -> ColorRect:
+	var backdrop := ColorRect.new()
+	backdrop.color = Color(0, 0, 0, 0.7)
+	backdrop.anchors_preset = Control.PRESET_FULL_RECT
+	backdrop.anchor_right = 1.0
+	backdrop.anchor_bottom = 1.0
+	backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
+	parent.add_child(backdrop)
+	animate_backdrop_in(backdrop)
+	return backdrop

@@ -56,6 +56,14 @@ var _speed_label: Label
 # Screen flash overlay
 var _flash_rect: ColorRect
 
+# HP flash state
+var _player_hp_low := false
+var _enemy_hp_low := false
+var _hp_flash_time := 0.0
+
+# Victory/Defeat banner
+var _banner_label: Label
+
 # EXP bar
 var _exp_bar: ProgressBar
 
@@ -175,6 +183,10 @@ func _setup_action_grid() -> void:
 	grid.add_child(run_btn)
 
 	parent.add_child(grid)
+
+	# Hover/press animations on action buttons
+	for btn in [fight_btn, items_btn, catch_btn, run_btn]:
+		ThemeManager.apply_button_hover_anim(btn)
 
 	# Reconnect signals
 	fight_btn.pressed.connect(_on_fight_pressed)
@@ -356,9 +368,9 @@ func _build_skill_buttons(creature: CreatureInstance) -> void:
 		if not skill:
 			continue
 		var btn := Button.new()
-		# Element color dot + name + power + accuracy
+		# Element dot prefix + name + power + accuracy
 		var element_col: Color = ThemeManager.ELEMENT_COLORS.get(skill.element, Color.GRAY)
-		btn.text = "%s P:%d A:%d%%" % [skill.skill_name, skill.power, int(skill.accuracy * 100)]
+		btn.text = "\u25cf %s P:%d A:%d%%" % [skill.skill_name, skill.power, int(skill.accuracy * 100)]
 		btn.custom_minimum_size = Vector2(130, 26)
 		btn.add_theme_font_size_override("font_size", 8)
 
@@ -386,6 +398,7 @@ func _build_skill_buttons(creature: CreatureInstance) -> void:
 		var idx := i
 		btn.pressed.connect(func(): _on_skill_selected(idx))
 		grid.add_child(btn)
+		ThemeManager.apply_button_hover_anim(btn)
 
 	skill_buttons.add_child(grid)
 
@@ -394,6 +407,7 @@ func _build_skill_buttons(creature: CreatureInstance) -> void:
 	back_btn.custom_minimum_size = Vector2(60, 24)
 	back_btn.pressed.connect(_on_back_pressed)
 	skill_buttons.add_child(back_btn)
+	ThemeManager.apply_button_hover_anim(back_btn)
 
 func show_message(text: String) -> void:
 	message_label.text = text
@@ -414,10 +428,12 @@ func _update_ball_count() -> void:
 func update_player_hp(current: int, max_val: int) -> void:
 	_animate_hp_bar(player_hp_bar, current, max_val)
 	player_hp_label.text = "%d / %d" % [current, max_val]
+	_player_hp_low = float(current) / float(max(1, max_val)) <= 0.25 and current > 0
 
 func update_enemy_hp(current: int, max_val: int) -> void:
 	_animate_hp_bar(enemy_hp_bar, current, max_val)
 	enemy_hp_label.text = "%d / %d" % [current, max_val]
+	_enemy_hp_low = float(current) / float(max(1, max_val)) <= 0.25 and current > 0
 
 func update_status(player_creature: CreatureInstance, enemy_creature: CreatureInstance) -> void:
 	_update_status_labels(player_creature, enemy_creature)
@@ -603,6 +619,50 @@ func _setup_shiny_sparkle(target_sprite: AnimatedSprite2D) -> void:
 	particles.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
 	particles.emission_rect_extents = Vector2(16, 16)
 	target_sprite.add_child(particles)
+
+func _process(delta: float) -> void:
+	# HP bar low-health flash (red pulse when <=25%)
+	_hp_flash_time += delta * 4.0
+	if _player_hp_low:
+		var pulse := 0.6 + sin(_hp_flash_time) * 0.4
+		player_hp_bar.modulate = Color(1.0, pulse, pulse)
+	else:
+		player_hp_bar.modulate = Color.WHITE
+	if _enemy_hp_low:
+		var pulse := 0.6 + sin(_hp_flash_time + 1.0) * 0.4
+		enemy_hp_bar.modulate = Color(1.0, pulse, pulse)
+	else:
+		enemy_hp_bar.modulate = Color.WHITE
+
+func show_battle_banner(text: String, color: Color) -> void:
+	if _banner_label:
+		_banner_label.queue_free()
+	_banner_label = Label.new()
+	_banner_label.text = text
+	_banner_label.add_theme_font_size_override("font_size", 28)
+	_banner_label.add_theme_color_override("font_color", color)
+	_banner_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.7))
+	_banner_label.add_theme_constant_override("shadow_offset_x", 2)
+	_banner_label.add_theme_constant_override("shadow_offset_y", 2)
+	_banner_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_banner_label.anchors_preset = Control.PRESET_CENTER
+	_banner_label.anchor_left = 0.5
+	_banner_label.anchor_top = 0.5
+	_banner_label.anchor_right = 0.5
+	_banner_label.anchor_bottom = 0.5
+	_banner_label.offset_left = -160
+	_banner_label.offset_top = -30
+	_banner_label.offset_right = 160
+	_banner_label.offset_bottom = 30
+	_banner_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	$Root.add_child(_banner_label)
+	# Scale-in animation
+	_banner_label.pivot_offset = Vector2(160, 30)
+	_banner_label.scale = Vector2(0.3, 0.3)
+	_banner_label.modulate.a = 0.0
+	var tw := create_tween().set_parallel(true)
+	tw.tween_property(_banner_label, "scale", Vector2.ONE, 0.4).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	tw.tween_property(_banner_label, "modulate:a", 1.0, 0.3).set_ease(Tween.EASE_OUT)
 
 func _on_skill_selected(index: int) -> void:
 	skill_buttons.visible = false

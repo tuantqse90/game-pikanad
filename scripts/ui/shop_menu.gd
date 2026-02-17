@@ -25,8 +25,8 @@ func _ready() -> void:
 func open_shop(items: Array[Resource], on_close: Callable = Callable()) -> void:
 	_shop_items = items
 	_on_close = on_close
-	panel.visible = true
 	_refresh()
+	ThemeManager.animate_panel_open(panel)
 
 func _refresh() -> void:
 	gold_label.text = "Gold: %d" % InventoryManager.gold
@@ -83,6 +83,7 @@ func _refresh() -> void:
 		var item_ref := item
 		buy_btn.pressed.connect(func(): _buy_item(item_ref))
 		row.add_child(buy_btn)
+		ThemeManager.apply_button_hover_anim(buy_btn)
 
 		item_list.add_child(row)
 
@@ -95,6 +96,6 @@ func _buy_item(item: ItemData) -> void:
 		gold_label.text = "Gold: %d (Not enough!)" % InventoryManager.gold
 
 func _close() -> void:
-	panel.visible = false
+	ThemeManager.animate_panel_close(panel)
 	if _on_close.is_valid():
 		_on_close.call()

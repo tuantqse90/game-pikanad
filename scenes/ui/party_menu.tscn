@@ -34,4 +34,4 @@ custom_minimum_size = Vector2(0, 150)
 
 [node name="CloseBtn" type="Button" parent="Panel/VBoxContainer"]
 custom_minimum_size = Vector2(100, 30)
-text = "Close (ESC)"
+text = "Close (Backspace / TAB)"

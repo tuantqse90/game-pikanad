@@ -91,6 +91,7 @@ func show_dialogue(lines: Array, on_complete: Callable = Callable(), speaker: St
 	else:
 		_speaker_label.visible = false
 
+	ThemeManager.animate_panel_open(panel)
 	_show_current_line()
 
 func _show_current_line() -> void:
@@ -155,7 +156,7 @@ func _on_close_pressed() -> void:
 	_close()
 
 func _close() -> void:
-	panel.visible = false
+	ThemeManager.animate_panel_close(panel)
 	_btn_row.visible = false
 	_triangle_label.visible = false
 	_speaker_label.visible = false

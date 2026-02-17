@@ -17,6 +17,7 @@ const NPC_COLOR := Color(0.3, 0.6, 1.0)
 
 var _parent_scene: Node2D
 var _zone_name := ""
+var _pulse_time := 0.0
 
 func setup(scene: Node2D, p_zone_name: String = "") -> void:
 	_parent_scene = scene
@@ -28,14 +29,19 @@ func setup(scene: Node2D, p_zone_name: String = "") -> void:
 	z_index = 50
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_pulse_time += delta * 3.0
 	queue_redraw()
 
 func _draw() -> void:
+	# Outer glow border (soft wider line)
+	draw_rect(Rect2(Vector2(-2, -2), Vector2(MINIMAP_W + 4, MINIMAP_H + 4)), Color(0.35, 0.6, 0.95, 0.15), false, 3.0)
 	# Double border: outer highlight + inner shadow + bg
 	draw_rect(Rect2(Vector2(-1, -1), Vector2(MINIMAP_W + 2, MINIMAP_H + 2)), BORDER_OUTER, false, 2.0)
 	draw_rect(Rect2(Vector2.ZERO, Vector2(MINIMAP_W, MINIMAP_H)), BG_COLOR)
 	draw_rect(Rect2(Vector2(1, 1), Vector2(MINIMAP_W - 2, MINIMAP_H - 2)), BORDER_INNER, false, 1.0)
+	# Top highlight line (inner glow)
+	draw_line(Vector2(2, 2), Vector2(MINIMAP_W - 2, 2), Color(0.6, 0.58, 0.75, 0.3), 1.0)
 
 	# Zone name label at top
 	if _zone_name != "":
@@ -44,10 +50,11 @@ func _draw() -> void:
 	if not _parent_scene:
 		return
 
-	# Draw portals
+	# Draw portals with pulse
+	var portal_pulse := 2.0 + sin(_pulse_time) * 1.0
 	for child in _parent_scene.get_children():
 		if child is Area2D and child.has_method("_check_access"):
-			_draw_dot(_world_to_minimap(child.position), PORTAL_COLOR, 2.5)
+			_draw_dot(_world_to_minimap(child.position), PORTAL_COLOR, portal_pulse)
 		elif child is Area2D and child.has_method("interact"):
 			_draw_dot(_world_to_minimap(child.position), NPC_COLOR, 2.0)
 

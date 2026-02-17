@@ -85,8 +85,28 @@
             statusNotice.textContent = text;
         }
 
+        // Prevent browser from stealing game keys (Tab=focus nav, Esc=pointer lock,
+        // Backspace=history back, Space=scroll). Keep canvas focused at all times.
+        const GAME_KEYS = ["Tab", "Escape", "Backspace", " "];
+        const canvas = document.getElementById("canvas");
+
+        document.addEventListener("keydown", function (e) {
+            if (GAME_KEYS.includes(e.key)) {
+                e.preventDefault();
+            }
+            // Re-focus canvas if it lost focus
+            if (document.activeElement !== canvas) {
+                canvas.focus();
+            }
+        });
+
+        // Also re-focus canvas on any click
+        document.addEventListener("click", function () {
+            canvas.focus();
+        });
+
         engine.startGame({
-            canvas: document.getElementById("canvas"),
+            canvas: canvas,
             onProgress: function (current, total) {
                 if (total > 0) {
                     statusProgressInner.style.width = (current / total * 100) + "%";
@@ -94,8 +114,7 @@
             },
         }).then(() => {
             setStatusMode("hidden");
-            // Focus canvas for input
-            document.getElementById("canvas").focus();
+            canvas.focus();
         }).catch((err) => {
             setStatusNotice("Error: " + err.message);
         });

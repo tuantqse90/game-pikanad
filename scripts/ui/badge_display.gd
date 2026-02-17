@@ -11,13 +11,8 @@ var _shimmer_time := 0.0
 func _ready() -> void:
 	layer = 50
 
-	# Dark backdrop
-	var backdrop := ColorRect.new()
-	backdrop.color = Color(0, 0, 0, 0.7)
-	backdrop.anchors_preset = Control.PRESET_FULL_RECT
-	backdrop.anchor_right = 1.0
-	backdrop.anchor_bottom = 1.0
-	add_child(backdrop)
+	# Dark backdrop with fade-in
+	var backdrop := ThemeManager.create_vignette_backdrop(self)
 
 	# Center panel
 	_panel = PanelContainer.new()
@@ -31,6 +26,7 @@ func _ready() -> void:
 	_panel.offset_right = 200
 	_panel.offset_bottom = 80
 	add_child(_panel)
+	ThemeManager.animate_panel_open(_panel)
 
 	var vbox := VBoxContainer.new()
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -105,6 +101,7 @@ func _ready() -> void:
 		queue_free()
 	)
 	vbox.add_child(close_btn)
+	ThemeManager.apply_button_hover_anim(close_btn)
 
 func _process(delta: float) -> void:
 	# Shimmer effect on earned badges (alpha oscillation)

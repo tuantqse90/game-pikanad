@@ -27,6 +27,7 @@ func _ready() -> void:
 func show_evolution(creature: CreatureInstance) -> void:
 	_creature = creature
 	visible = true
+	ThemeManager.animate_panel_open(panel)
 
 	var old_name := creature.data.species_name
 	var new_data := creature.data.evolves_into
@@ -88,11 +89,15 @@ func _on_evolve() -> void:
 	if _creature:
 		_creature.evolve()
 	_cleanup_particles()
+	ThemeManager.animate_panel_close(panel)
+	await get_tree().create_timer(0.25).timeout
 	visible = false
 	evolution_confirmed.emit()
 
 func _on_stop() -> void:
 	_cleanup_particles()
+	ThemeManager.animate_panel_close(panel)
+	await get_tree().create_timer(0.25).timeout
 	visible = false
 	evolution_cancelled.emit()
 

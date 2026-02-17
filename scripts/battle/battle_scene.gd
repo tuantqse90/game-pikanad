@@ -299,11 +299,14 @@ func _on_trainer_creature_switched(new_creature: CreatureInstance, remaining: in
 func _on_battle_ended(result: String) -> void:
 	if result == "win" or result == "capture":
 		AudioManager.play_track(AudioManager.MusicTrack.VICTORY)
+		hud.show_battle_banner("VICTORY!", Color(0.3, 1.0, 0.4))
+	elif result == "lose":
+		hud.show_battle_banner("DEFEATED", ThemeManager.COL_ACCENT_RED)
 	match result:
 		"lose":
 			PartyManager.heal_all()
-			await get_tree().create_timer(1.0).timeout
+			await get_tree().create_timer(1.5).timeout
 			SceneManager.go_to_main_menu()
 		_:
-			await get_tree().create_timer(0.5).timeout
+			await get_tree().create_timer(1.0).timeout
 			SceneManager.go_to_overworld()
